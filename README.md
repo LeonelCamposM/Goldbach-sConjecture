@@ -1,1 +1,1 @@
-# goldbach-s-conjecture
+# goldbach-s_conjecture
