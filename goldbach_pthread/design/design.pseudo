@@ -1,0 +1,54 @@
+
+main(argc, argv):
+  value = stdin()
+  threads = argv[1]
+
+  goldbach_model_run(value, threads)
+end
+
+
+GoldbachModel{  
+    GoldbachModel_run(value, threads):
+      shared_data_t* shared_data;
+
+      // Set shared data values
+      shared_data->thread_count = threads;
+      shared_data->num = value;
+      shared_data->results.(init);
+
+      // Concurrent work
+      create_threads(run(shared_data));
+      join_threads()
+
+      // Serial print
+      for index = 0 to thread_count:
+        int64_t sums = count(shared_data->results[index]);
+        print(shared_data->results[index],sums);
+    end
+
+    run(shared_data):
+      number = shared_data->num;
+      id = private_data->thread_number;
+      threadCount = shared_data->thread_count;
+
+      // Compute the start of the interval where a goldbachWorker will
+      //find sums 
+      start = calcStart(number, threadCount, id);
+
+      // Compute the finish of the interval where a goldbachWorker will
+      //find sums 
+      finish = calcFinish(number, threadCount, id);
+      
+      shared_data->results[thread_number] =
+        GoldbachWorker_run(worker, number, start, finish);
+    end
+}
+
+// Return array of addings 
+class GoldbachWorker{
+int64_t* GoldbachWorker_run(worker, number, start, finish):
+    int64_t* addings;
+    addings= get_goldbach_sums();
+    return addings; 
+}
+
