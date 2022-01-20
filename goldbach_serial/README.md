@@ -18,3 +18,6 @@ The script will execute all the test cases and report the time it took to execut
 
 1) Run the script: ./check.sh
 ![checkImg](img/Check.png)
+
+## Results
+Time calculating file input023: 792.41 seconds (1 thread)
