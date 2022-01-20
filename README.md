@@ -13,3 +13,9 @@ On the other hand, the "weak conjecture" proposes that every positive, greater t
 ## Abstract
 
 The purpose of this project is to create a brute force solution (for numbers greater than 5) which is expected to be slow; And then try to optimize it using different technologies and concurrency patterns implemented in the C programming language.
+
+## Requirements
+
+This program was designed in ubutu 20.04 and requires the following packages:
+- sudo apt install build-essential
+- sudo apt install icdiff
