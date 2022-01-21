@@ -1,23 +1,12 @@
-# Goldbach serial
+# Goldbach pthread design
+The goal of this design is to increase the execution speed of goldbach_serial by using the concurrency pattern known as conditionally safe.
 
-This is the base program, it has an acceptable duration for small test cases, however it requires considerable time to obtain the solution for large test cases.
+## Conditonally safe (Concurrency pattern)
+Each thread does its work and places its results in a region of memory that only it can access.
 
-## User manual 
-### How to make a manual test
-1) Compile the program: make
-![makeImg](img/Make.png)
+# Graphic concurrent design
+![designImg](design/design.svg)
 
-2) Run the program: ./bin/goldbach_serial
-![runImg](img/Execute.png)
-
-3) Write a number and press enter
-![writeImg](img/Write.png)
-
-### How to make a automatic test
-The script will execute all the test cases and report the time it took to execute each one.
-
-1) Run the script: ./check.sh
-![checkImg](img/Check.png)
-
-## Results
-Time calculating file input023: 792.41 seconds (1 thread)
+# Work Distribution
+In this case, hard work is the part of the code that requires more use of the cpu, so the work of the "first_adding" cycle will be distributed using the block mapping technique
+![workImg](design/work_distribution.svg)
