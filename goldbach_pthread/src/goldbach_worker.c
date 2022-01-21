@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include "goldbach_worker.h"
 
 #define STARTVALUE 2
 
@@ -187,7 +188,7 @@ bool analize_arguments(int64_t value) {
   return valid;
 }
 
-void get_goldbach_sums(int64_t value) {
+int64_t* get_goldbach_sums(int64_t value) {
   // list : true = list the sum, false = don't list the sums
   bool list = false;
   if (value < 0) {
@@ -208,20 +209,13 @@ void get_goldbach_sums(int64_t value) {
     num_addings = 3;
     addings = weak_conjecture(value);
   }
-  int sums = count(addings, num_addings);
-  show_goldbach_results(addings, sums, value, list, num_addings);
-  array_destroy(addings);
-  printf("\n");
+
+  return addings->elements;
 }
 
-void run() {
-  int64_t value = 0;
-  while (fscanf(stdin, "%" SCNd64, &value) == 1) {
-    bool valid_input = analize_arguments(value);
-    if (valid_input) {
-      get_goldbach_sums(value);
-    }
-  }
+int64_t* goldbach_worker_run(int64_t num, int64_t start, int64_t finish) {
+  int64_t* results = get_goldbach_sums(value);
+  return results;
 }
 
 int main(int argc, char* argv[]) {
