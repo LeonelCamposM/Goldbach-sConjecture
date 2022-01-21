@@ -2,6 +2,7 @@
 #define input_handler_H
 #include <inttypes.h>
 #include <stddef.h>
+#include <assert.h>
 
 /**
 *@brief validate user input to handle errors and N/A exceptions

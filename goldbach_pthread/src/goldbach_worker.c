@@ -24,7 +24,7 @@ bool is_prime(int64_t n);
 *@param number to verify
 *@return ptr to array made up of the addends found
 */
-dynamic_array_t* strongConjecture(int64_t number);
+dynamic_array_t* strongConjecture(int64_t number, int64_t start, int64_t finish);
 
 /**
 *@brief print the sums of the weak goldbach conjecture 
@@ -32,7 +32,7 @@ dynamic_array_t* strongConjecture(int64_t number);
 *@param number to verify
 *@return ptr to array made up of the addends found
 */
-dynamic_array_t* weakConjecture(int64_t number);
+dynamic_array_t* weakConjecture(int64_t number, int64_t start, int64_t finish);
 
 /**
 *@brief show all addings stored in array
@@ -62,7 +62,7 @@ bool analize_arguments(int64_t value);
 *@brief get goldbach sums of a value
 *@param value number 
 */
-void get_goldbach_sums(int64_t value);
+int64_t* get_goldbach_sums(int64_t value, int64_t start, int64_t finish);
 
 
 
@@ -89,7 +89,7 @@ bool is_prime(int64_t n) {
   return signal;
 }
 
-dynamic_array_t* strong_conjecture(int64_t number) {
+dynamic_array_t* strong_conjecture(int64_t number, int64_t start, int64_t finish) {
   // Create addings array
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
@@ -97,7 +97,7 @@ dynamic_array_t* strong_conjecture(int64_t number) {
   report_and_exit (addings == NULL, "addings array\n");
   
   // Fill addings array
-  for (int64_t first_adding = STARTVALUE; first_adding <=  number; first_adding++) {
+  for (int64_t first_adding = start; first_adding <=  finish; first_adding++) {
     if (is_prime(first_adding)) {
       int64_t second_adding = number - first_adding;
       bool valid_goldbach_sum = (is_prime(second_adding) && first_adding <= second_adding);
@@ -110,7 +110,7 @@ dynamic_array_t* strong_conjecture(int64_t number) {
   return addings;
 }
 
-dynamic_array_t* weak_conjecture(int64_t number) {
+dynamic_array_t* weak_conjecture(int64_t number, int64_t start, int64_t finish) {
   // Create addings array
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
@@ -118,7 +118,7 @@ dynamic_array_t* weak_conjecture(int64_t number) {
   report_and_exit (addings == NULL, "addings array\n");
 
   // Fill addings array
-  for (int64_t first_adding = STARTVALUE; first_adding <=  number; first_adding++) {
+  for (int64_t first_adding = start; first_adding <=  finish; first_adding++) {
     if (is_prime(first_adding)) {
       for (int64_t second_adding = first_adding; second_adding <=  number; second_adding++) {
         if (is_prime(second_adding)) {
@@ -188,37 +188,22 @@ bool analize_arguments(int64_t value) {
   return valid;
 }
 
-int64_t* get_goldbach_sums(int64_t value) {
-  // list : true = list the sum, false = don't list the sums
-  bool list = false;
-  if (value < 0) {
-    list = true;
-    value *= -1;
-  }
-
+int64_t* get_goldbach_sums(int64_t value, int64_t start, int64_t finish) {
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
   array_init(addings);
 
-  int num_addings = 0;
   // Verify parity of the number
   if (value % 2 == 0) {
-    num_addings = 2;
-    addings = strong_conjecture(value);
+    addings = strong_conjecture(value, start, finish);
   } else {
-    num_addings = 3;
-    addings = weak_conjecture(value);
+    addings = weak_conjecture(value, start, finish);
   }
 
   return addings->elements;
 }
 
 int64_t* goldbach_worker_run(int64_t num, int64_t start, int64_t finish) {
-  int64_t* results = get_goldbach_sums(value);
+  int64_t* results = get_goldbach_sums(num, start, finish);
   return results;
-}
-
-int main(int argc, char* argv[]) {
-  run();
-  return EXIT_SUCCESS;
 }
