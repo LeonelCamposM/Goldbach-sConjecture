@@ -7,7 +7,7 @@ This is the base program, it has an acceptable duration for small test cases, ho
 1) Compile the program: make
 ![makeImg](img/Make.png)
 
-2) Run the program: ./bin/goldbach_serial
+2) Run the program: ./bin/program_name
 ![runImg](img/Execute.png)
 
 3) Write a number and press enter
