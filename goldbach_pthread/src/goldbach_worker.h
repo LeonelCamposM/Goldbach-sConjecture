@@ -10,7 +10,7 @@
 *@param num number of 64-bit positive integers
 *@param start work start value for worker
 *@param finish work finish value for worker
-*@return array with solution numbers, null if cannot be created
+*@return array with solution numbers, error if cannot be created
 */
 int64_t*  goldbach_worker_run(int64_t num, int64_t start, int64_t finish);
 
