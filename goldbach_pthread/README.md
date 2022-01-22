@@ -7,3 +7,6 @@ Time calculating file input023: 249.303 seconds (12 threads)
 
 ### Serial:
 Time calculating file input023: 792.41 seconds (1 thread)
+
+## Design
+![designMD](design/README.md)
