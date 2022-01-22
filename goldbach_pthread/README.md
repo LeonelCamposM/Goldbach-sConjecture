@@ -15,6 +15,7 @@ Each thread does its work and places its results in a region of memory that only
 
 ### Work distribution
 In this case, hard work is the part of the code that requires more use of the cpu, so the work of the "first_adding" cycle will be distributed using the block mapping technique.
+
 ![workImg](design/work_distribution.svg)
 
 ### Block mapping
