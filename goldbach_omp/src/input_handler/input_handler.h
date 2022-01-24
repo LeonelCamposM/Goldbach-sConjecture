@@ -3,6 +3,9 @@
 #include <inttypes.h>
 #include <stddef.h>
 #include <assert.h>
+#include "dynamic_array.h"
+
+dynamic_array_t* read_input();
 
 /**
 *@brief validate user input to handle errors and N/A exceptions

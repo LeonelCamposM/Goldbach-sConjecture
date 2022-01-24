@@ -1,6 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "input_handler.h"
+#include "common.h"
+
+dynamic_array_t* read_input() {
+  dynamic_array_t* input_numbers = (dynamic_array_t*)
+    calloc(1, sizeof(dynamic_array_t));
+  report_and_exit(input_numbers == NULL, "could not create GoldbachModel input array");
+  array_init(input_numbers);
+
+  // Reads the numbers from stdin
+  int64_t newNumber = 0;
+  while (scanf("%" SCNd64, &newNumber) == 1) {
+    array_append(input_numbers, newNumber);
+  }
+  return input_numbers;
+}
 
 int verify_input(int64_t value) {
   int error = EXIT_SUCCESS;
