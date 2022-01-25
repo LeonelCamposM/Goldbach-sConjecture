@@ -80,12 +80,6 @@ void producer_start(dynamic_array_t* input_numbers, queue_t* queue, size_t consu
       new_work->goldbach_number = value;
       new_work->results_id = consumer_count*index+thread_id;
       new_work->results = resultsa;
-
-      printf("%" PRIi64 " -> start\n", new_work->start);
-      printf("%" PRIi64 " -> finish\n", new_work->finish);
-      printf("%" PRIi64 " -> goldbach_number\n", new_work->goldbach_number);
-      printf("%" PRIi64 " -> results_id\n", new_work->results_id);
-      printf("\n");
       queue_enqueue(queue, *new_work);
       free(new_work);
     }

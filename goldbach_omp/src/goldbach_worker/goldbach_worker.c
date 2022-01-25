@@ -114,7 +114,6 @@ int64_t* get_goldbach_sums(int64_t value, int64_t start, int64_t finish) {
   array_append(addings,0);
   array_append(addings,0);
   array_append(addings,0);
-  array_print(addings);
   return addings->elements;
 }
 

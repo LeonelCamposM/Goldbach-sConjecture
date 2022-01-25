@@ -49,137 +49,29 @@ int controller_run(size_t threads) {
   report_and_exit(data == NULL, "Could not create producer consumer data");
 
   data->input_numbers = read_input();
-  array_print(data->input_numbers);
+  // array_print(data->input_numbers);
 
   data->threads = threads != 0 ? threads : sysconf(_SC_NPROCESSORS_ONLN);
 
   //int64_t** results
   data->results = (int64_t**)
     calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
-  //report_and_exit(results == NULL, "could not create results array");
+  report_and_exit(data->results == NULL, "could not create results array");
 
   data->results = prod_cons_omp_start(data, data->results);
-  //printf("\n\n\n\n\n\n\nel 2");
-
-  // for (int64_t i = 0; i < 12; i++) {
-  //   printf(" cheking results[%zu]  \n", i);
-
-  //     printf(" <-Array");
-  //     size_t ind = 0;
-  //     while (data->results[i][ind] != 0)
-  //     {
-  //       int64_t* ab = data->results[i];
-  //       printf("%" PRIi64 " + ", ab[ind]);
-  //       ind++;
-  //     }
-
-     
-  // }
-  //  printf("\n\n\n\n\n\n\nel 2");
-  // // 1 thread print
   print_results(data->input_numbers, data->results, data->threads);
   //printf("\n");
-  // free_results(data->results, shared_data->thread_count);
-  // free(shared_data);
+  free_results(data->results, data->threads);
+  free(data);
   return error;
 }
 
-// void print_results(size_t inputCount, int64_t* input, int64_t** results,
-//   size_t thread_count) {
-//   // TODO(check) optimization01: change print to handle n numbers adding for
-//   // Repeat inputCount times
-//   for (size_t inputIter = 0; inputIter < inputCount; inputIter++) {
-//     // get nex number to be printed
-//     int64_t value = input[inputIter];
-
-//     // Handle N/A Exceptions
-//     int valido = verify_input(value);
-
-//     if (valido == EXIT_SUCCESS) {
-//       // verify list
-//       bool list = false;
-//       if (value < 0) {
-//         value *= -1;
-//         list = true;
-//       }
-
-//       // Verify parity of the number
-//       int numAddings = 0;
-//       if (value % 2 == 0) {
-//         numAddings = 2;
-//       } else {
-//         numAddings = 3;
-//       }
-
-//       // TODO(check) optimization01: give start and finish to print number
-//       // calc start and finish positions of array
-//       int64_t start = inputIter*thread_count;
-//       int64_t finish = start + thread_count;
-
-//       //  count total amount of sums found
-//       bool first = true;
-//       int64_t sums = 0;
-//       for (int64_t i = 0; i < 12; i++) {
-//         //printf(" cheking results[%zu]  \n", i);
-//         sums += count_array_sums(results[i], numAddings);
-//         //printf(" <-Array");
-//         //size_t ind = 0;
-//         //while (results[i][ind] != 0)
-//         //{
-//         //  int64_t* ab = results[i];
-//         //  printf("%" PRIi64 " + ", ab[ind]);
-//         //  ind++;
-//         // }
-
-//         // printf("%" PRIi64 ": ", value);
-//         // printf("%" PRIi64 " sums", sums);
-//         // printf("\n");
-//       }
-//       //print array stored in results[index]
-//       for (int64_t index = start; index < finish; index++) {
-//         int64_t thread_sums =
-//           count_array_sums(results[index], numAddings);
-
-//         //  list sums
-//         if (list == true) {
-//           // print format -value : x sums
-//           if (index == start) {
-//             printf("-");
-//             printf("%" PRIi64 ": ", value);
-//             printf("%" PRIi64 " sums", sums);
-//             printf(": ");
-//           }
-//           // print array
-//           if (thread_sums != 0) {
-//             show_array_addings(results[index],
-//               thread_sums, numAddings, first);
-//             first = false;
-//           }
-//         } else {
-//           //  dont list sums
-//           if (index == start) {
-//             printf("%" PRIi64 ": ", value);
-//             printf("%" PRIi64 " sums", sums);
-//           }
-//         }
-//       }
-//     }
-//   }
-// }
-
 void print_results(dynamic_array_t* input, int64_t** results,
   size_t thread_count) {
-  // TODO(check) optimization01: change print to handle n numbers adding for
-  // Repeat inputCount times
-  printf("inp\n");
-  array_print(input);
-  printf("inp\n");
   for (size_t inputIter = 0; inputIter < input->count; inputIter++) {
     // get nex number to be printed
-    printf(" eting new value \n");
     int64_t value = input->elements[inputIter];
-    printf("%" PRIi64 ": value ", value);
-            // printf("%" PRIi64 " sums", sums);
+
     // Handle N/A Exceptions
     int valido = verify_input(value);
 
@@ -199,13 +91,10 @@ void print_results(dynamic_array_t* input, int64_t** results,
         numAddings = 3;
       }
 
-      // TODO(check) optimization01: give start and finish to print number
       // calc start and finish positions of array
       size_t start = inputIter*thread_count;
       size_t finish = start + thread_count;
-      printf("start : %zu", start);
-      printf("finish : %zu", finish);
-      printf("\n");
+
       //  count total amount of sums found
       bool first = true;
       int64_t sums = 0;
