@@ -15,7 +15,6 @@ typedef struct queue_node {
 } queue_node_t;
 
 typedef struct {
-  pthread_mutex_t can_access_queue;
   queue_node_t* head;
   queue_node_t* tail;
 } queue_t;

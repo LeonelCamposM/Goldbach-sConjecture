@@ -8,20 +8,12 @@
 #include "common.h"
 #include "goldbach_worker.h"
 #include "dynamic_array.h"
-#include "queue.h"
-#include "producer.h"
+#include "prod_cons_omp.h"
 
 int controller_run(size_t threads);
 
-/**
-*@brief print GolbachModel results
-*@param num_addings  number of addings 
-*@param value user input (goldbach number)
-*@param list  number of addings 
-*@param data  ptr to shared data 
-*@return error code
-*/
-void print_results(int64_t num_addings, int64_t value, bool list, void* data);
+void print_results(dynamic_array_t* input, int64_t** results,
+  size_t thread_count);
 
 /**
 *@brief counts the number of sums in array
@@ -52,95 +44,217 @@ void free_results(int64_t** results, int64_t thread_count);
 int controller_run(size_t threads) {
   int error = EXIT_SUCCESS;
 
-  dynamic_array_t* input_numbers = read_input();
-  array_print(input_numbers);
+  prod_cons_data_t* data = (prod_cons_data_t*)
+    calloc(1, sizeof(prod_cons_data_t));
+  report_and_exit(data == NULL, "Could not create producer consumer data");
 
-  queue_t* queue = (queue_t*)
-    calloc(1, sizeof(queue_t));
-  report_and_exit(queue == NULL, "Could not create queue");
-  queue_init(queue);
+  data->input_numbers = read_input();
+  array_print(data->input_numbers);
 
-  threads = threads != 0 ? threads : sysconf(_SC_NPROCESSORS_ONLN);
+  data->threads = threads != 0 ? threads : sysconf(_SC_NPROCESSORS_ONLN);
 
-  int64_t** results = (int64_t**)
-    calloc(threads, sizeof(int64_t*));
-  report_and_exit(results == NULL, "could not create results array");
+  //int64_t** results
+  data->results = (int64_t**)
+    calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
+  //report_and_exit(results == NULL, "could not create results array");
 
-  // Produce all work
-  producer_start(input_numbers, queue, threads, results);
+  data->results = prod_cons_omp_start(data, data->results);
+  //printf("\n\n\n\n\n\n\nel 2");
 
+  // for (int64_t i = 0; i < 12; i++) {
+  //   printf(" cheking results[%zu]  \n", i);
 
-  // //  concurrent work
-  // error = create_threads(shared_data);
+  //     printf(" <-Array");
+  //     size_t ind = 0;
+  //     while (data->results[i][ind] != 0)
+  //     {
+  //       int64_t* ab = data->results[i];
+  //       printf("%" PRIi64 " + ", ab[ind]);
+  //       ind++;
+  //     }
 
+     
+  // }
+  //  printf("\n\n\n\n\n\n\nel 2");
   // // 1 thread print
-  // int num_addings = (value % 2 == 0)? 2 : 3;
-  // print_results(num_addings, value, list, shared_data);
-  // printf("\n");
-  // free_results(shared_data->results, shared_data->thread_count);
+  print_results(data->input_numbers, data->results, data->threads);
+  //printf("\n");
+  // free_results(data->results, shared_data->thread_count);
   // free(shared_data);
   return error;
 }
 
-// void* run(void* data) {
-//   private_data_t* private_data = (private_data_t*)data;
-//   report_and_exit(private_data == NULL, "could not create GoldbachWorker Private Data");
+// void print_results(size_t inputCount, int64_t* input, int64_t** results,
+//   size_t thread_count) {
+//   // TODO(check) optimization01: change print to handle n numbers adding for
+//   // Repeat inputCount times
+//   for (size_t inputIter = 0; inputIter < inputCount; inputIter++) {
+//     // get nex number to be printed
+//     int64_t value = input[inputIter];
 
-//   //  initialize data
-//   int64_t number = private_data->shared_data->num;
-//   int64_t id = private_data->thread_number;
-//   int64_t threadCount = private_data->shared_data->thread_count;
-//   int64_t start = calc_start(number, threadCount, id);
-//   int64_t finish = calc_finish(number, threadCount, id);
-  
-//   // Now str contains the integer as characters
-//   //  save worker array in results
-//   private_data->shared_data->results[id] =
-//     goldbach_worker_run(number, start, finish);
-//   return NULL;
-// }
+//     // Handle N/A Exceptions
+//     int valido = verify_input(value);
 
-// void print_results(int64_t num_addings, int64_t value, bool list, void* data) {
-//   shared_data_t* shared_data = (shared_data_t*)data;
-//   report_and_exit(shared_data == NULL, "could not create GoldbachWorker Private Data");
-
-//   bool first = true;
-//   int64_t sums = 0;
-//   for (int64_t i = 0; i < shared_data->thread_count; i++) {
-//     sums += count_array_sums(shared_data->results[i], num_addings);
-//   }
-
-//   for (int64_t index = 0; index < shared_data->thread_count; index++) {
-//     int64_t thread_sums =
-//       count_array_sums(shared_data->results[index], num_addings);
-
-//     if (list == true) {
-//       if (index == 0) {
-//         printf("-");
-//         printf("%" PRIi64 ": ", value);
-//         printf("%" PRIi64 " sums", sums);
-//         printf(": ");
+//     if (valido == EXIT_SUCCESS) {
+//       // verify list
+//       bool list = false;
+//       if (value < 0) {
+//         value *= -1;
+//         list = true;
 //       }
-//       if (thread_sums != 0) {
-//         show_array_addings(shared_data->results[index],
-//           thread_sums, num_addings, first);
-//         first = false;
+
+//       // Verify parity of the number
+//       int numAddings = 0;
+//       if (value % 2 == 0) {
+//         numAddings = 2;
+//       } else {
+//         numAddings = 3;
 //       }
-//     } else {
-//       if (index == 0) {
-//         printf("%" PRIi64 ": ", value);
-//         printf("%" PRIi64 " sums", sums);
+
+//       // TODO(check) optimization01: give start and finish to print number
+//       // calc start and finish positions of array
+//       int64_t start = inputIter*thread_count;
+//       int64_t finish = start + thread_count;
+
+//       //  count total amount of sums found
+//       bool first = true;
+//       int64_t sums = 0;
+//       for (int64_t i = 0; i < 12; i++) {
+//         //printf(" cheking results[%zu]  \n", i);
+//         sums += count_array_sums(results[i], numAddings);
+//         //printf(" <-Array");
+//         //size_t ind = 0;
+//         //while (results[i][ind] != 0)
+//         //{
+//         //  int64_t* ab = results[i];
+//         //  printf("%" PRIi64 " + ", ab[ind]);
+//         //  ind++;
+//         // }
+
+//         // printf("%" PRIi64 ": ", value);
+//         // printf("%" PRIi64 " sums", sums);
+//         // printf("\n");
+//       }
+//       //print array stored in results[index]
+//       for (int64_t index = start; index < finish; index++) {
+//         int64_t thread_sums =
+//           count_array_sums(results[index], numAddings);
+
+//         //  list sums
+//         if (list == true) {
+//           // print format -value : x sums
+//           if (index == start) {
+//             printf("-");
+//             printf("%" PRIi64 ": ", value);
+//             printf("%" PRIi64 " sums", sums);
+//             printf(": ");
+//           }
+//           // print array
+//           if (thread_sums != 0) {
+//             show_array_addings(results[index],
+//               thread_sums, numAddings, first);
+//             first = false;
+//           }
+//         } else {
+//           //  dont list sums
+//           if (index == start) {
+//             printf("%" PRIi64 ": ", value);
+//             printf("%" PRIi64 " sums", sums);
+//           }
+//         }
 //       }
 //     }
 //   }
 // }
 
+void print_results(dynamic_array_t* input, int64_t** results,
+  size_t thread_count) {
+  // TODO(check) optimization01: change print to handle n numbers adding for
+  // Repeat inputCount times
+  printf("inp\n");
+  array_print(input);
+  printf("inp\n");
+  for (size_t inputIter = 0; inputIter < input->count; inputIter++) {
+    // get nex number to be printed
+    printf(" eting new value \n");
+    int64_t value = input->elements[inputIter];
+    printf("%" PRIi64 ": value ", value);
+            // printf("%" PRIi64 " sums", sums);
+    // Handle N/A Exceptions
+    int valido = verify_input(value);
+
+    if (valido == EXIT_SUCCESS) {
+      // verify list
+      bool list = false;
+      if (value < 0) {
+        value *= -1;
+        list = true;
+      }
+
+      // Verify parity of the number
+      int numAddings = 0;
+      if (value % 2 == 0) {
+        numAddings = 2;
+      } else {
+        numAddings = 3;
+      }
+
+      // TODO(check) optimization01: give start and finish to print number
+      // calc start and finish positions of array
+      size_t start = inputIter*thread_count;
+      size_t finish = start + thread_count;
+      printf("start : %zu", start);
+      printf("finish : %zu", finish);
+      printf("\n");
+      //  count total amount of sums found
+      bool first = true;
+      int64_t sums = 0;
+      for (size_t i = start; i < finish; i++) {
+        sums += count_array_sums(results[i], numAddings);
+      }
+
+      //  print array stored in results[index]
+      for (int64_t index = start; index < finish; index++) {
+        int64_t thread_sums =
+          count_array_sums(results[index], numAddings);
+
+        //  list sums
+        if (list == true) {
+          // print format -value : x sums
+          if (index == start) {
+            printf("-");
+            printf("%" PRIi64 ": ", value);
+            printf("%" PRIi64 " sums", sums);
+            printf(": ");
+          }
+          // print array
+          if (thread_sums != 0) {
+            show_array_addings(results[index],
+              thread_sums, numAddings, first);
+            first = false;
+          }
+        } else {
+          //  dont list sums
+          if (index == start) {
+            printf("%" PRIi64 ": ", value);
+            printf("%" PRIi64 " sums", sums);
+          }
+        }
+      }
+      printf("\n");
+    }
+  }
+}
+
+
 int64_t count_array_sums(int64_t* array, int num_addings) {
   int64_t sums = 0;
   int64_t iterAddings = 0;
-    while (array[iterAddings] != 0) {
+    int64_t num = array[iterAddings];
+    while (num != 0) {
       sums +=1;
       iterAddings += num_addings;
+      num = array[iterAddings];
     }
   return sums;
 }

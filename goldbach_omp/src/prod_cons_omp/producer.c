@@ -66,7 +66,7 @@ int64_t calc_finish(int64_t value, int64_t thread_count, int64_t thread_id) {
   return calc_start(value, thread_count, thread_id + 1);
 }
 
-void producer_start(dynamic_array_t* input_numbers, queue_t* queue, size_t consumer_count, int64_t** results) {
+void producer_start(dynamic_array_t* input_numbers, queue_t* queue, size_t consumer_count, int64_t** resultsa) {
   for (size_t index = 0; index < input_numbers->count; index++) {
     int64_t value = input_numbers->elements[index];
     value = value > 0 ? value :  value * -1;
@@ -79,7 +79,7 @@ void producer_start(dynamic_array_t* input_numbers, queue_t* queue, size_t consu
       new_work->finish = calc_finish(value, consumer_count, thread_id);
       new_work->goldbach_number = value;
       new_work->results_id = consumer_count*index+thread_id;
-      new_work->results = results;
+      new_work->results = resultsa;
 
       printf("%" PRIi64 " -> start\n", new_work->start);
       printf("%" PRIi64 " -> finish\n", new_work->finish);
