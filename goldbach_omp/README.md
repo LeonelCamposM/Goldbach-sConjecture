@@ -8,7 +8,7 @@ Time calculating file input023: 203.07 seconds (12 threads))
 The goal of this design is to increase the execution speed of goldbach_pthread by using the concurrency pattern known as producer-consumer.
 
 ### Producer-Consumer (concurrency pattern)
-There are many variants of the producer-consumer problem, in this case first all the work is produced serially, and later consumers consume the work.
+There are many variants of the producer-consumer problem. In this case, first all the work is produced serially, and later consumers consume the work.
 
 Taking into account that:
 
@@ -16,14 +16,9 @@ Taking into account that:
 - It is not a case where you have to wait for user input to start processing as soon as the job is received, because the job is already predefined and does not change.
 
 ### Graphic concurrent design
-![designImg](design/design.svg)
+![designImg](design/concurrent_design.svg)
 
 ### Work distribution
-In this case, hard work is the part of the code that requires more use of the cpu, so the work of the "first_adding" cycle will be distributed using the block mapping technique.
+In this design, the main thread "producer" took all the number input and decomposed it into units of work for consumers, who permanently draw from a queue and stop when the queue is empty
 
-![workImg](design/work_distribution.svg)
-
-### Block mapping
-This technique distributes units of work evenly across multiple threads, allocating overhead in some cases.
-![blockImg](design/block_mapping.svg)
 
