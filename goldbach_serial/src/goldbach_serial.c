@@ -66,12 +66,12 @@ void get_goldbach_sums(int64_t value);
 
 
 void report_and_exit(bool error_condition, char* report_name) {
-    if (error_condition == true) {
-      printf("An error occurred with ");
-      printf("%s", report_name);
-      assert(error_condition != false);
-      exit(EXIT_FAILURE);
-    }
+  if (error_condition == true) {
+    printf("An error occurred with ");
+    printf("%s", report_name);
+    assert(error_condition != false);
+    exit(EXIT_FAILURE);
+  }
 }
 
 bool is_prime(int64_t n) {
@@ -224,7 +224,7 @@ void run() {
   }
 }
 
-int main(int argc, char* argv[]) {
+int main() {
   run();
   return EXIT_SUCCESS;
 }

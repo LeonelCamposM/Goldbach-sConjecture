@@ -179,8 +179,7 @@ void free_results(int64_t** results, int64_t thread_count) {
 
 int main(int argc, char* argv[]) {
   int error = EXIT_SUCCESS;
-  //int threads = analyze_arguments(argc, argv);
-  size_t threads = 12;
+  size_t threads = analyze_arguments(argc, argv);
   controller_run(threads);
   return error;
 }
