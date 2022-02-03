@@ -24,16 +24,16 @@ These programs were designed on ubuntu 20.04 and require the following packages:
 
 ### How to make a manual test
 1) Compile the program: make
-![makeImg](goldbach_serial/img/Make.png)
+![makeImg](img/Make.png)
 
 2) Run the program: ./bin/program_name
-![runImg](goldbach_serial/img/Execute.png)
+![runImg](img/Execute.png)
 
 3) Write a number and press enter
-![writeImg](goldbach_serial/img/Write.png)
+![writeImg](img/Write.png)
 
 ### How to make a automatic test
 The script will execute all the test cases and report the time it took to execute each one.
 
 1) Run the script: ./check.sh
-![checkImg](goldbach_serial/img/Check.png)
+![checkImg](img/Check.png)
