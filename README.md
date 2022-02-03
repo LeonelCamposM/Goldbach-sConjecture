@@ -36,3 +36,4 @@ These programs were designed on ubuntu 20.04 and require the following packages:
 The script will execute all the test cases and report the time it took to execute each one.
 
 1) Run the script: ./program_tester.sh
+![TesterImg](img/Tester.png)
