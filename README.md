@@ -35,5 +35,4 @@ These programs were designed on ubuntu 20.04 and require the following packages:
 ### How to make a automatic test
 The script will execute all the test cases and report the time it took to execute each one.
 
-1) Run the script: ./check.sh
-![checkImg](img/Check.png)
+1) Run the script: ./program_tester.sh
