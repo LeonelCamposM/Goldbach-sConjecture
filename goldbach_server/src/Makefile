@@ -1,10 +1,10 @@
 CC=cc
 CXX=g++
 DEFS=
-FLAGS=-g -Wall -Wextra $(DEFS) -fopenmp -shared -o libGoldbach.so -fPIC
+FLAGS=-g -Wall -Wextra $(DEFS) -fopenmp -shared -fPIC
 CFLAGS=$(FLAGS) -std=gnu11
 CXXFLAGS=$(FLAGS) -std=gnu++11
-LIBS=-pthread -lm
+LIBS=-lm
 LINTFILTERS=$\
 	-build/c++11,$\
 	-build/header_guard,$\
@@ -23,7 +23,7 @@ INCLUDES=$(DIRS:%=-I%)
 .SECONDEXPANSION:
 
 bin/$(APPNAME): $(OBJECTS) | $$(@D)/.
-	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) $^ -o bin/libGoldbach.so $(LIBS)
 
 build/%.o: src/%.c $(HEADERS) | $$(@D)/.
 	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@ $(LIBS)

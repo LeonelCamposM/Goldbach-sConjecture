@@ -1,4 +1,3 @@
-import imp
 import socket
 import os
 from time import sleep
