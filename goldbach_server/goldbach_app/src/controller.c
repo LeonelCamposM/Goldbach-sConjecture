@@ -37,11 +37,11 @@ void show_array_addings(int64_t* array, int64_t sums,
 /**
 *@brief free matrix results
 *@param results ptr to matrix results
-*@param thread_count number of working threads
+*@param goldbach_num number to work
 */
 void free_results(int64_t** results, int64_t thread_count);
 
-int controller_run(size_t threads) {
+int controller_run(size_t goldbach_num) {
   int error = EXIT_SUCCESS;
 
   prod_cons_data_t* data = (prod_cons_data_t*)
@@ -49,9 +49,9 @@ int controller_run(size_t threads) {
   report_and_exit(data == NULL, "Could not create producer consumer data");
 
   data->input_numbers = read_input();
-  // array_print(data->input_numbers);
+  array_append(data->input_numbers, goldbach_num);
 
-  data->threads = threads != 0 ? threads : sysconf(_SC_NPROCESSORS_ONLN);
+  data->threads = sysconf(_SC_NPROCESSORS_ONLN);
 
   //int64_t** results
   data->results = (int64_t**)

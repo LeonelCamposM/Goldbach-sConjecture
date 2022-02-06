@@ -23,7 +23,7 @@ class Client():
     available_threads = os.sysconf("SC_NPROCESSORS_ONLN")
     self.sendMessage(self.server_socket, str(available_threads))
 
-    libGoldbach.main()
+    libGoldbach.controller_run(available_threads)
 
   def stop(self):
     self.logAppend("closing sockets...")
