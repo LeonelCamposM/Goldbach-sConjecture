@@ -1,6 +1,10 @@
+import imp
 import socket
 import os
 from time import sleep
+from ctypes import *
+
+libGoldbach = CDLL("./bin/libGoldbach.so")
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
@@ -19,8 +23,7 @@ class Client():
     available_threads = os.sysconf("SC_NPROCESSORS_ONLN")
     self.sendMessage(self.server_socket, str(available_threads))
 
-    while True:
-      sleep(5)
+    libGoldbach.main()
 
   def stop(self):
     self.logAppend("closing sockets...")
