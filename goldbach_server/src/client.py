@@ -19,10 +19,17 @@ class Client():
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logAppend('Connecting on %s port %s \n' % SERVER_ADDR)
     self.server_socket.connect(SERVER_ADDR)
-    available_threads = os.sysconf("SC_NPROCESSORS_ONLN")
-    self.sendMessage(self.server_socket, str(available_threads))
 
-    libGoldbach.controller_run(available_threads)
+    while True:
+      work = self.recvMessage(self.server_socket)
+
+      if(work == "stop"):
+        self.logAppend("work finished")
+        self.sendMessage(self.server_socket, "print")
+        break
+      else:
+        results = libGoldbach.controller_run(int(work))
+        self.sendMessage(self.server_socket, "results fake")
 
   def stop(self):
     self.logAppend("closing sockets...")
