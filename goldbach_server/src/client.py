@@ -1,6 +1,7 @@
+import ctypes
 import socket
 import os
-from time import sleep
+from time import sleep, time
 from ctypes import *
 
 libGoldbach = CDLL("./bin/libGoldbach.so")
@@ -28,8 +29,11 @@ class Client():
         self.sendMessage(self.server_socket, "print")
         break
       else:
-        results = libGoldbach.controller_run(int(work))
-        self.sendMessage(self.server_socket, "results fake")
+        results = ctypes.c_char_p("".encode('utf-8'))
+        libGoldbach.controller_run(int(work), results) 
+        results = results.value.decode("utf-8")
+        self.sendMessage(self.server_socket, results)
+        sleep(0.5)
 
   def stop(self):
     self.logAppend("closing sockets...")

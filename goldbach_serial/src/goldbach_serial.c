@@ -5,6 +5,13 @@
 #include <assert.h>
 #include <math.h>
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#ifndef MAX
+#define MAX 100
+#endif
 #define STARTVALUE 2
 
 /**
@@ -224,7 +231,46 @@ void run() {
   }
 }
 
+
+// https://www.delftstack.com/es/howto/c/concatenate-strings-in-c/
+void *concat_strings(void* restrict dst, const void* restrict src, int c, size_t n)
+{
+  const char *s = src;
+  for (char *ret = dst; n; ++ret, ++s, --n)
+  {
+    *ret = *s;
+    if ((unsigned char)*ret == (unsigned char)c)
+        return ret + 1;
+  }
+  return 0;
+}
+
+int string_cat(const char* str1, const char* str2, char* buffer) {
+  concat_strings(concat_strings(buffer, str1, '\0', MAX) - 1, str2, '\0', MAX);
+  return 0;
+}
+
+void int64ToChar(char a[MAX], int64_t n) {
+  memcpy(a, &n, 8);
+}
+
 int main() {
-  run();
+  // const char* str1 = "krmelo";
+  // const char* str2 = " guapo";
+  // char buffer[MAX];
+
+  // char numero[MAX];
+  int64_t num = 400;
+  // sprintf(numero, "%lld", num);
+  // // int64ToChar(numero,num);
+
+  // // string_cat("adaaaaaa", str2, buffer);
+  // // string_cat(buffer, numero, buffer);
+
+  // fprintf("%s\n",numero);
+   char str[80];
+   sprintf(str, "Value of Pi = %li", num);
+   puts(str);
+  //run();
   return EXIT_SUCCESS;
 }
