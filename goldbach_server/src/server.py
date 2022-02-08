@@ -9,7 +9,7 @@ PACKAGE_SIZE = 1024
 WELCOME_PORT = 5000
 SERVER_IP = '172.31.172.232'
 
-WORKERS = 2
+WORKERS = 1
 
 class Server:
     def __init__(self, addr):
@@ -22,10 +22,12 @@ class Server:
         self.results = Dict()
         self.worker_count = 0
         self.can_access_worker_count = threading.Lock()
+        self.can_send_results = threading.Semaphore(0)
         
         # Start listening on main socket
         self.welcome_socket.bind(addr)
         self.welcome_socket.listen(1)
+        
 
 
     def listenClient(self):
@@ -59,9 +61,7 @@ class Server:
             self.can_access_worker_count.acquire()
             self.worker_count += 1
             if self.worker_count == WORKERS:
-              ordered_results = self.results.get_all()
-              for result in range(len(ordered_results), 0, -1):
-                print(ordered_results[result])
+              self.can_send_results.release()
             self.can_access_worker_count.release()
             break
           self.results.add(results_id, client_results)
@@ -71,7 +71,12 @@ class Server:
           if input_numbers == "disconect":
             break
           else:
-            results = "Goldbach sums for :\n"
+            self.can_send_results.acquire()
+            msg = ""
+            ordered_results = self.results.get_all()
+            for result in range(len(ordered_results), 0, -1):
+              msg += str(ordered_results[result])
+            results = msg
             self.sendMessage(connection, results)
 
 
@@ -106,9 +111,9 @@ class Server:
 # Alternate betwen send and rcv 
 class Queue():
   def __init__(self):
-    self.queue = [77401,412680,1753664,26084,806,58691,888888,34956,674,17027,84733,4123,10000000,953,6827,30733,61832,20134,86523,62132,3020,128594,62,536736,61610,288,39415,74074,8134,96274,1443614,17177,68515,8218212,133211,58165,677,9,-3,-20,27748,187322,99893,14194,1479,450,263586,2202020,8013,59811,23559,-104,7777]
+    # self.queue = [77401,412680,1753664,26084,806,58691,888888,34956,674,17027,84733,4123,10000000,953,6827,30733,61832,20134,86523,62132,3020,128594,62,536736,61610,288,39415,74074,8134,96274,1443614,17177,68515,8218212,133211,58165,677,9,-3,-20,27748,187322,99893,14194,1479,450,263586,2202020,8013,59811,23559,-104,7777]
 
-    # self.queue = [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100]
+    self.queue = [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100]
 
     
     self.can_access_queue = threading.Lock()

@@ -23,17 +23,15 @@ class Client():
     while True:
       work = "input 23"
       self.sendMessage(self.server_socket, work)
-      results = self.recvMessage(self.server_socket)
       if(work == "stop"):
         self.logAppend("closing connection")
         self.sendMessage(self.server_socket, "disconect")
         self.stop()
         break
       else:
-        results = ctypes.c_char_p("".encode('utf-8'))
-        libGoldbach.controller_run(int(work), results) 
-        results = results.value.decode("utf-8")
-        self.sendMessage(self.server_socket, results)
+        results = self.recvMessage(self.server_socket)
+        self.logAppend("Goldbach sums results: \n"+results)
+        
 
   def stop(self):
     self.logAppend("closing sockets...")
