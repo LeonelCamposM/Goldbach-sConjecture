@@ -27,6 +27,7 @@ class Client():
       if(work == "stop"):
         self.logAppend("work finished")
         self.sendMessage(self.server_socket, "print")
+        self.stop()
         break
       else:
         results = ctypes.c_char_p("".encode('utf-8'))
