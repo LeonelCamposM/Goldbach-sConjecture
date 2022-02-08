@@ -13,19 +13,17 @@ SERVER_IP = '192.168.1.115'
 SERVER_PORT = 5000
 SERVER_ADDR = (SERVER_IP, SERVER_PORT)
 
-class Client():
+class Worker():
   def __init__(self): 
     # Used for TCP communication with the server
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logAppend('Connecting on %s port %s \n' % SERVER_ADDR)
     self.server_socket.connect(SERVER_ADDR)
-    self.sendMessage(self.server_socket, "client")
+    self.sendMessage(self.server_socket, "worker")
     while True:
-      work = "input 23"
-      self.sendMessage(self.server_socket, work)
-      results = self.recvMessage(self.server_socket)
+      work = self.recvMessage(self.server_socket)
       if(work == "stop"):
-        self.logAppend("closing connection")
+        self.logAppend("work finished")
         self.sendMessage(self.server_socket, "disconect")
         self.stop()
         break
@@ -55,8 +53,9 @@ class Client():
         message += '$'
     return message.encode("utf-8")
 
+
   def logAppend(self, message):
     print("\n[CLIENT] "+message)
 
 if __name__ == "__main__":
-    client = Client()
+    client = Worker()

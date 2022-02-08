@@ -1,16 +1,13 @@
-from ctypes import sizeof
 import socket
 import threading
-from time import sleep
 from time import time
-from tracemalloc import start
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
 
 # Server main socket
 WELCOME_PORT = 5000
-SERVER_IP = '172.31.161.60'
+SERVER_IP = '172.31.172.232'
 
 WORKERS = 2
 
@@ -48,39 +45,49 @@ class Server:
             self.stop()
 
     def handleClient(self, connection, client_address):
-      self.logAppend('New connectiopn from: %s port %s' % client_address)
-      while True:
-        client_work = self.work_queue.dequeue()
-        results_id = client_work[0]
-        goldbach_number = client_work[1]
-        self.sendMessage(connection, str(goldbach_number))
-        self.logAppend("Client on "+str(client_address[1])+" is working in "+str(goldbach_number))
-        client_results = self.recvMessage(connection)
-        # self.logAppend("Client on "+str(client_address[1])+" results: "+str(results)+"en "+str(results_id))
-        if client_results == "print":
-          self.can_access_worker_count.acquire()
-          self.worker_count += 1
-          if self.worker_count == WORKERS:
-            ordered_results = self.results.get_all()
-            for result in range(len(ordered_results), 0, -1):
-              print(ordered_results[result])
-          self.can_access_worker_count.release()
+      connection_type = self.recvMessage(connection)
+      self.logAppend("New connectiopn from: "+ str(client_address[0]) +" port "+str(client_address[1])+" ("+connection_type+")")
+      if connection_type == "worker":
+        while True:
+          client_work = self.work_queue.dequeue()
+          results_id = client_work[0]
+          goldbach_number = client_work[1]
+          self.sendMessage(connection, str(goldbach_number))
+          self.logAppend("Client on "+str(client_address[1])+" is working in "+str(goldbach_number))
+          client_results = self.recvMessage(connection)
+          if client_results == "disconect":
+            self.can_access_worker_count.acquire()
+            self.worker_count += 1
+            if self.worker_count == WORKERS:
+              ordered_results = self.results.get_all()
+              for result in range(len(ordered_results), 0, -1):
+                print(ordered_results[result])
+            self.can_access_worker_count.release()
+            break
+          self.results.add(results_id, client_results)
+      elif "client":
+        while True:
+          input_numbers = self.recvMessage(connection)
+          if input_numbers == "disconect":
+            break
+          else:
+            results = "Goldbach sums for :\n"
+            self.sendMessage(connection, results)
 
-
-          break
-        self.results.add(results_id, client_results)
 
     def stop(self):
         self.logAppend("Shutting down server")
         self.welcome_socket.close()
     
     def sendMessage(self, connection, message):
-        message = message.encode("utf-8")
-        connection.sendall(message)
+      message = self.fill_with_trash(message, PACKAGE_SIZE)
+      connection.sendall(message)
 
     def recvMessage(self, connection):
         message = connection.recv(PACKAGE_SIZE)
         message = message.decode("utf-8")
+        # Clean message thrash
+        message = message.replace('$','')
         return message
 
     # Thread safe print
@@ -88,6 +95,12 @@ class Server:
         self.can_print.acquire()
         print("\n[SERVER] "+message)
         self.can_print.release()
+    
+    # Add trash and encode a message
+    def fill_with_trash(self, message, package_size):
+      for index in range(package_size-len(message)):
+          message += '$'
+      return message.encode("utf-8")
 
 # Thread safe queue, sleep thread when queue is empty
 # Alternate betwen send and rcv 
