@@ -9,14 +9,7 @@
 #include "goldbach_worker.h"
 #include "dynamic_array.h"
 #include "prod_cons_omp.h"
-
-#define MAX 100
-
-char* controller_run(int64_t goldbach_num, char* output_string);
-
-void print_results(dynamic_array_t* input, int64_t** results,
-  size_t thread_count, char* output_string);
-
+#  define MAX 100
 /**
 *@brief counts the number of sums in array
 *@details counts the number of sums found in the array by iterating the 
@@ -43,11 +36,29 @@ void show_array_addings(int64_t* array, int64_t sums,
 */
 void free_results(int64_t** results, int64_t thread_count);
 
+/**
+*@brief get goldbach sums for goldbach_num save result in output_string
+*/
+int controller_run(int64_t goldbach_num, char* output_string);
+
+/**
+*@brief save goldbqach results in output_string
+*/
+void print_results(dynamic_array_t* input, int64_t** results,
+  size_t thread_count, char* output_string);
+
+/**
+*@brief concatenates 2 strings
+*/
 int string_cat(const char* str1, const char* str2, char* buffer, bool number_flag, int64_t number);
 
+/**
+*@brief concatenates 2 strings
+*/
 void *concat_strings(void* restrict dst, const void* restrict src, int c, size_t n);
 
-char* controller_run(int64_t goldbach_num, char* output_string) {
+
+int controller_run(int64_t goldbach_num, char* output_string) {
   int error = EXIT_SUCCESS;
 
   prod_cons_data_t* data = (prod_cons_data_t*)
@@ -59,7 +70,6 @@ char* controller_run(int64_t goldbach_num, char* output_string) {
 
   data->threads = sysconf(_SC_NPROCESSORS_ONLN);
 
-  //int64_t** results
   data->results = (int64_t**)
     calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
   report_and_exit(data->results == NULL, "could not create results array");
@@ -68,8 +78,9 @@ char* controller_run(int64_t goldbach_num, char* output_string) {
 
   print_results(data->input_numbers, data->results, data->threads, output_string);
   free_results(data->results, data->threads);
+  array_destroy(data->input_numbers);
   free(data);
-  return 0;
+  return error;
 }
 
 void print_results(dynamic_array_t* input, int64_t** results,
@@ -109,7 +120,7 @@ void print_results(dynamic_array_t* input, int64_t** results,
       }
 
       //  print array stored in results[index]
-      for (int64_t index = start; index < finish; index++) {
+      for (size_t index = start; index < finish; index++) {
         int64_t thread_sums =
           count_array_sums(results[index], numAddings);
 
@@ -142,10 +153,12 @@ void print_results(dynamic_array_t* input, int64_t** results,
         }
       }
       string_cat(output_string, "\n", output_string, false, 0);
+    }else {
+      string_cat(output_string, "", output_string, true, value);
+      string_cat(output_string, ": NA\n", output_string, false, 0);
     }
   }
 }
-
 
 int64_t count_array_sums(int64_t* array, int num_addings) {
   int64_t sums = 0;
@@ -215,9 +228,7 @@ int string_cat(const char* str1, const char* str2, char* buffer, bool number_fla
   return 0;
 }
 
-int main(int argc, char* argv[]) {
-  int error = EXIT_SUCCESS;
-  // size_t threads = analyze_arguments(argc, argv);
-  // controller_run(threads);
+int main() {
+  int error = EXIT_SUCCESS;;
   return error;
 }

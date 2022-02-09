@@ -14,13 +14,4 @@ dynamic_array_t* read_input();
 */
 int verify_input(int64_t value);
 
-/**
-*@brief analize given arguments : number of threads
-*@details assert for invalid thread count
-*@param argc number of args
-*@param argv char of args
-*@return valid thread count 
-*/
-int64_t analyze_arguments(int argc, char* argv[]);
-
 #endif  // input_handler_H

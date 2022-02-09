@@ -17,7 +17,7 @@ class Client():
   def __init__(self): 
     # Used for TCP communication with the server
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.logAppend('Connecting on %s port %s \n' % SERVER_ADDR)
+    self.logAppend('Connecting on %s port %s ' % SERVER_ADDR)
     self.server_socket.connect(SERVER_ADDR)
     self.sendMessage(self.server_socket, "client")
     while True:
@@ -30,7 +30,7 @@ class Client():
         break
       else:
         results = self.recvMessage(self.server_socket)
-        self.logAppend("Goldbach sums results: \n"+results)
+        self.logAppend("Goldbach sums results: \n\n"+results)
         
 
   def stop(self):
