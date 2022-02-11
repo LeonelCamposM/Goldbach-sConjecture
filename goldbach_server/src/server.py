@@ -1,13 +1,14 @@
 import socket
 import threading
 from time import time
+from urllib import response
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
 
 # Server main socket
 WELCOME_PORT = 5000
-SERVER_IP = '172.31.161.171'
+SERVER_IP = '172.31.172.56'
 
 WORKERS = 1
 
@@ -30,7 +31,6 @@ class Server:
         self.welcome_socket.listen(1)
 
     def listenClient(self):
-        start = time()
         try:
             # Main thread always keep listening
             while True:
@@ -41,17 +41,16 @@ class Server:
                   daemon = True).start()
                 self.logAppend("Active connections "+ str(threading.active_count() -1))
         except KeyboardInterrupt:
-            finish = time()
-            print("\ntime: "+str(finish-start))
             self.stop()
 
     def handleConnection(self, connection, client_address):
       connection_type = self.recvMessage(connection)
-      self.logAppend("New connectiopn from: "+ str(client_address[0]) +" port "+str(client_address[1])+" ("+connection_type+")")
       if connection_type == "worker":
+        self.logAppend("New connectiopn from: "+ str(client_address[0]) +" port "+str(client_address[1])+" ("+connection_type+")")
         self.handleWorker(connection, client_address, )
-      elif "client":
-        self.handleClient(connection)
+      else:
+        self.logAppend("New connection from: "+ str(client_address[0]) +" port "+str(client_address[1])+" ("+"client"+")")
+        self.handleClient(connection, connection_type)
 
     def stop(self):
         self.logAppend("Shutting down server")
@@ -95,26 +94,64 @@ class Server:
             client_results = self.recvMessage(connection)
             self.results.add(results_id, client_results)
      
-    def handleClient(self, connection):
-      while True:
-        input_numbers = self.recvMessage(connection)
-        if input_numbers == "disconect":
-          break
-        else:
-          #enqueue work
-          input_numbers = str(input_numbers).split(",")
-          self.work_queue.enqueue("wait")
-          for number in range(0,len(input_numbers)):
-            self.work_queue.enqueue(str(number)+","+str((input_numbers[number])))
-          
-          # wait to send results
-          self.can_send_results.acquire()
-          msg = ""
-          ordered_results = self.results.get_all()
-          for result in ordered_results:
-            msg += str(ordered_results[result])
-          self.sendMessage(connection, msg)
-          break
+    def handleClient(self, connection, request):
+      client_request = (request.split(" "))[1]
+      if client_request[1:17] == "":
+        self.serveHomepage(connection)
+      elif client_request[1:17] == "goldbach?number=":
+        input_numbers = request[21:].split("%2C")
+        last_number = input_numbers[len(input_numbers)-1]
+        input_numbers[len(input_numbers)-1] = last_number.split(" ",1)[0]
+        print(input_numbers[len(input_numbers)-1])
+        start = time()
+        #enqueue work
+        self.work_queue.enqueue("wait")
+        for number in range(0,len(input_numbers)):
+          a = input_numbers[number]
+          print(a)
+          self.work_queue.enqueue(str(number)+","+str((input_numbers[number])))
+
+        
+        # wait to send results
+        self.can_send_results.acquire()
+        msg = ""
+        ordered_results = self.results.get_all()
+        for result in ordered_results:
+          msg += "<br>"
+          msg += str(ordered_results[result])
+        finish = time()
+        msg += "<br>"
+        msg +=("time: "+str(finish-start))
+        self.serveGoldbachresults(connection, msg)
+      else:
+        pass
+    
+    def serveHomepage(self,connection):
+      title = "Goldbach sums"
+      response = "<html lang=\"en\">\n  <meta charset=\"ascii\"/>\n  <title>" + title + "</title>\n  <style>body {font-family: monospace}</style>\n  <h1>" + title + "</h1>\n  <form method=\"get\" action=\"/goldbach\">\n <input type=\"text\" name=\"number\" required/>\n    <button type=\"submit\">Calculate</button>\n  </form>\n</html>\n"
+
+      header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+      mimetype = "text/html"
+      header += "Content-Type: "+mimetype+"\n\n"
+
+      home_page = header
+      home_page += response
+      home_page = home_page.encode("utf_8")
+      connection.sendall(home_page)
+
+    def serveGoldbachresults(self,connection, results):
+      title = "Goldbach sums"
+      response = "<html lang=\"en\">\n  <meta charset=\"ascii\"/>\n  <title>" + title + "</title>\n\n"+"<h2>"+ title+"<br>"+results + "</h2>\n\n</html>\n"
+
+      header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+      mimetype = "text/html"
+      header += "Content-Type: "+mimetype+"\n\n"
+
+      home_page = header
+      home_page += response
+      home_page = home_page.encode("utf_8")
+      connection.sendall(home_page)
+
 
 # Thread safe queue, sleep thread when queue is empty
 # Alternate betwen send and rcv 
