@@ -9,7 +9,12 @@
 #include "goldbach_worker.h"
 #include "dynamic_array.h"
 #include "prod_cons_omp.h"
-#  define MAX 100
+
+int controller_run(int64_t goldbach_num);
+
+void print_results(dynamic_array_t* input, int64_t** results,
+  size_t thread_count);
+
 /**
 *@brief counts the number of sums in array
 *@details counts the number of sums found in the array by iterating the 
@@ -27,38 +32,16 @@ int64_t count_array_sums(int64_t* array, int num_addings);
 *@param sums : amount of sums 
 */
 void show_array_addings(int64_t* array, int64_t sums,
-    int64_t num_addings, bool first, char* output_string);
+    int64_t num_addings, bool first);
 
 /**
 *@brief free matrix results
 *@param results ptr to matrix results
-*@param goldbach_num number to work
+*@param thread_count number of working threads
 */
 void free_results(int64_t** results, int64_t thread_count);
 
-/**
-*@brief get goldbach sums for goldbach_num save result in output_string
-*/
-int controller_run(int64_t goldbach_num, char* output_string);
-
-/**
-*@brief save goldbqach results in output_string
-*/
-void print_results(dynamic_array_t* input, int64_t** results,
-  size_t thread_count, char* output_string);
-
-/**
-*@brief concatenates 2 strings
-*/
-int string_cat(const char* str1, const char* str2, char* buffer, bool number_flag, int64_t number);
-
-/**
-*@brief concatenates 2 strings
-*/
-void *concat_strings(void* restrict dst, const void* restrict src, int c, size_t n);
-
-
-int controller_run(int64_t goldbach_num, char* output_string) {
+int controller_run(int64_t  goldbach_num) {
   int error = EXIT_SUCCESS;
 
   prod_cons_data_t* data = (prod_cons_data_t*)
@@ -70,21 +53,20 @@ int controller_run(int64_t goldbach_num, char* output_string) {
 
   data->threads = sysconf(_SC_NPROCESSORS_ONLN);
 
+  //int64_t** results
   data->results = (int64_t**)
     calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
   report_and_exit(data->results == NULL, "could not create results array");
 
   data->results = prod_cons_omp_start(data, data->results);
-
-  print_results(data->input_numbers, data->results, data->threads, output_string);
+  print_results(data->input_numbers, data->results, data->threads);
   free_results(data->results, data->threads);
-  array_destroy(data->input_numbers);
   free(data);
   return error;
 }
 
 void print_results(dynamic_array_t* input, int64_t** results,
-  size_t thread_count, char* output_string) {
+  size_t thread_count) {
   for (size_t inputIter = 0; inputIter < input->count; inputIter++) {
     // get nex number to be printed
     int64_t value = input->elements[inputIter];
@@ -121,44 +103,42 @@ void print_results(dynamic_array_t* input, int64_t** results,
 
       //  print array stored in results[index]
       for (size_t index = start; index < finish; index++) {
-        int64_t thread_sums =
+        size_t thread_sums =
           count_array_sums(results[index], numAddings);
 
         //  list sums
         if (list == true) {
           // print format -value : x sums
           if (index == start) {
-            string_cat("", "-", output_string, false, 0);
-            string_cat(output_string, "", output_string, true, value);
-            string_cat(output_string, ": ", output_string, false, 0);
-            string_cat(output_string, "", output_string, true, sums);
-            string_cat(output_string, " sums", output_string, false, 0);
-            string_cat(output_string, ": ", output_string, false, 0);
+            write_output("-", 0, false);
+            write_output("",value, true);
+            write_output(": ", 0, false);
+            write_output("", sums, true);
+            write_output(" sums", 0, false);
+            write_output(": ", 0, false);
           }
           // print array
           if (thread_sums != 0) {
             show_array_addings(results[index],
-              thread_sums, numAddings, first, output_string);
+              thread_sums, numAddings, first);
             first = false;
           }
         } else {
           //  dont list sums
           if (index == start) {
-            string_cat("", "", output_string, false, 0);
-            string_cat(output_string, "", output_string, true, value);
-            string_cat(output_string, ": ", output_string, false, 0);
-            string_cat(output_string, "", output_string, true, sums);
-            string_cat(output_string, " sums", output_string, false, 0);
+            write_output("",value, true);
+            write_output(": ", 0, false);
+            write_output("", sums, true);
+            write_output(" sums", 0, false);
+            write_output(": ", 0, false);
           }
         }
       }
-      string_cat(output_string, "\n", output_string, false, 0);
-    }else {
-      string_cat(output_string, "", output_string, true, value);
-      string_cat(output_string, ": NA\n", output_string, false, 0);
+      write_output("\n",0, false);
     }
   }
 }
+
 
 int64_t count_array_sums(int64_t* array, int num_addings) {
   int64_t sums = 0;
@@ -173,24 +153,24 @@ int64_t count_array_sums(int64_t* array, int num_addings) {
 }
 
 void show_array_addings(int64_t* array, int64_t sums,
-    int64_t num_addings, bool first, char* output_string) {
+    int64_t num_addings, bool first) {
   int64_t iterAddings = 0;
   while (iterAddings <= (num_addings*sums)-num_addings) {
     if (iterAddings != 0) {
-      string_cat(output_string, ", ", output_string, false, 0);
+      write_output(", ", 0, false);
     } else {
       if (!first) {
-        string_cat(output_string, ", ", output_string, false, 0);
+        write_output(", ", 0, false);
       }
     }
-    string_cat(output_string, "", output_string, true, array[iterAddings]);
-    string_cat(output_string, " + ", output_string, false, 0);
+    write_output("", array[iterAddings],true);
+    write_output(" + ", 0, false);
     if (num_addings == 3) {
-      string_cat(output_string, "", output_string, true, array[iterAddings+1]);
-      string_cat(output_string, " + ", output_string, false, 0);
-      string_cat(output_string, "", output_string, true, array[iterAddings+2]);
+      write_output("", array[iterAddings+1],true);
+      write_output(" + ", 0, false);
+      write_output("", array[iterAddings+2],true);
     } else {
-      string_cat(output_string, "", output_string, true, array[iterAddings+1]);
+      write_output("", array[iterAddings+1],true);
     }
     iterAddings+=num_addings;
   }
@@ -201,34 +181,4 @@ void free_results(int64_t** results, int64_t thread_count) {
     free(results[index]);
   }
   free(results);
-}
-
-// https://www.delftstack.com/es/howto/c/concatenate-strings-in-c/
-void *concat_strings(void* restrict dst, const void* restrict src, int c, size_t n)
-{
-  const char *s = src;
-  for (char *ret = dst; n; ++ret, ++s, --n)
-  {
-    *ret = *s;
-    if ((unsigned char)*ret == (unsigned char)c)
-        return ret + 1;
-  }
-  return 0;
-}
-
-int string_cat(const char* str1, const char* str2, char* buffer, bool number_flag, int64_t number) {
-  // no number
-  if(number_flag == false){
-    concat_strings(concat_strings(buffer, str1, '\0', MAX) - 1, str2, '\0', MAX);
-  }else{
-    char str[MAX];
-    sprintf(str, "%li", number);
-    concat_strings(concat_strings(buffer, str1, '\0', MAX) - 1, str, '\0', MAX);
-  }
-  return 0;
-}
-
-int main() {
-  int error = EXIT_SUCCESS;;
-  return error;
 }

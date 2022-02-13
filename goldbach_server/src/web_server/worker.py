@@ -28,10 +28,11 @@ class Worker():
         self.stop()
         break
       else:
-        results = ctypes.c_char_p("".encode('utf-8'))
-        libGoldbach.controller_run(int(work), results) 
-        results = results.value.decode("utf-8")
-        self.sendMessage(self.server_socket, results)
+        libGoldbach.controller_run(int(work)) 
+        results = open('Output.txt','r')
+        line = results.readline()
+        os.remove("Output.txt")
+        self.sendMessage(self.server_socket, line)
 
   def stop(self):
     self.logAppend("closing sockets...")
@@ -58,4 +59,4 @@ class Worker():
     print("\n[CLIENT] "+message)
 
 if __name__ == "__main__":
-    client = Worker()
+  client = Worker()

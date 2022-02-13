@@ -108,12 +108,14 @@ int64_t* get_goldbach_sums(int64_t value, int64_t start, int64_t finish) {
   // Verify parity of the number
   if (value % 2 == 0) {
     addings = strong_conjecture(value, start, finish);
+    array_append(addings,0);
+    array_append(addings,0);
   } else {
     addings = weak_conjecture(value, start, finish);
+    array_append(addings,0);
+    array_append(addings,0);
+    array_append(addings,0);
   }
-  array_append(addings,0);
-  array_append(addings,0);
-  array_append(addings,0);
   return addings->elements;
 }
 

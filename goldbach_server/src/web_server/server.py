@@ -1,16 +1,13 @@
 import socket
 import threading
 from time import time
-from urllib import response
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
 
 # Server main socket
 WELCOME_PORT = 5000
-SERVER_IP = '172.31.172.56'
-
-WORKERS = 1
+SERVER_IP = '172.17.124.208'
 
 class Server:
     def __init__(self, addr):
