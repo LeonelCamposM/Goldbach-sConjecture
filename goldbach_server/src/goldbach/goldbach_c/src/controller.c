@@ -182,3 +182,7 @@ void free_results(int64_t** results, int64_t thread_count) {
   }
   free(results);
 }
+
+int main(){
+  return 0;
+}

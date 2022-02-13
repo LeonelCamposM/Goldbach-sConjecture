@@ -1,9 +1,8 @@
-import ctypes
 import socket
 import os
 from ctypes import *
 
-libGoldbach = CDLL("./bin/libGoldbach.so")
+libGoldbach = CDLL("./goldbach/goldbach_c/bin/libGoldbach.so")
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
