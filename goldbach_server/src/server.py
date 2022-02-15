@@ -7,7 +7,7 @@ PACKAGE_SIZE = 1024
 
 # Server main socket
 WELCOME_PORT = 5000
-SERVER_IP = '172.17.116.219'
+SERVER_IP = '172.17.118.225'
 
 class Server:
   def __init__(self, addr):
@@ -47,7 +47,7 @@ class Server:
   def handleConnection(self, connection):
     client_address = connection.getsockname()
     rcvd_message = self.recvMessage(connection)
-    connection_info = "New connectiopn from: "+ str(client_address[0]) +" port "+str(client_address[1])
+    connection_info = "New connection from: "+ str(client_address[0]) +" port "+str(client_address[1])
 
     if rcvd_message == "worker":
       connection_info += " ("+rcvd_message+")"

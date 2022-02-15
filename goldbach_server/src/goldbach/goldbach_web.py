@@ -4,25 +4,53 @@ import threading
 # Protocol defined message size
 PACKAGE_SIZE = 1024
 
+class Result_Package():
+  def __init__(self, work_package, worker_response):
+    self.work_package = work_package
+    self.worker_response = worker_response
+
+class Work_Package():
+  def __init__(self, input_id, number, client_id, request_size):
+    self.input_id = input_id
+    self.number = number
+    self.client_id = client_id
+    self.request_size = request_size
+
+class Results_Dispatcher:
+  def __init__(self):
+    self.queues = dict()
+  
+  def start(self, results, responses):
+    while True:
+      result_package = results.dequeue()
+      work_package = result_package.work_package
+      if result_package.worker_response == "stop":
+        break
+      else:
+        client_queue = self.queues.setdefault(work_package.client_id, [])
+        client_queue.append(result_package.worker_response)
+        print("dispatch queue:"+ str(client_queue))
+        if len(client_queue) == work_package.request_size:
+          responses.enqueue(client_queue)
+          self.queues.pop(work_package.client_id)
+
+
 # Thread safe queue, sleep thread when queue is empty
 # Alternate betwen send and rcv 
 class Queue():
   def __init__(self):
     self.queue= []
-    self.can_acces_queue = threading.Semaphore(0)
-    self.can_acces_last = threading.Lock()
+    self.can_pop = threading.Semaphore(0)
   
   # Awake thread consumer of queue after add a new message
   def enqueue(self, message):
     self.queue.append(message)
-    self.can_acces_queue.release()
+    self.can_pop.release()
   
   # Sleep thread consumer when queue is empty
   def dequeue(self):
-    message = "stop"
-    self.can_acces_queue.acquire()
-    if len(self.queue) > 0:
-      message = self.queue.pop()
+    self.can_pop.acquire()
+    message = self.queue.pop()
     return message
 
 # Only 1 thread can use it 
@@ -66,52 +94,53 @@ class Goldbach_Web:
   def __init__(self):
     self.work_queue = Queue()
     self.results_queue = Queue()
+    self.response_queue = Queue()
 
     self.results = Dict()
-    self.worker_count = 0
-    self.can_access_worker_count = threading.Lock()
     self.can_send_results = threading.Semaphore(0)
     self.can_print = threading.Lock()
 
+    dispatcher = Results_Dispatcher()
+    threading.Thread(target = dispatcher.start, args=(self.results_queue,self.response_queue),
+      daemon = True).start()
+    
+
   def handleWorker(self, connection):
-    client_address = connection.getsockname()
     while True:
-        client_work = self.work_queue.dequeue()
-        if client_work == "wait":
-            self.logAppend("Client on "+str(client_address[1])+" is working in "+str(client_work))
-            self.can_send_results.release()
-        else:
-            client_work = str(client_work).split(",")
-            results_id = client_work[0]
-            goldbach_number = client_work[1]
-            self.sendMessage(connection, str(goldbach_number))
-            self.logAppend("Client on "+str(client_address[1])+" is working in "+str(goldbach_number))
-            client_results = self.recvMessage(connection)
-            self.results.add(results_id, client_results)
+      work = self.work_queue.dequeue()
+      goldbach_number = work.number
+      self.sendMessage(connection, str(goldbach_number))
+      self.logAppend("Client on "+str(work.client_id)+" is working in "+str(goldbach_number))
+      worker_response = self.recvMessage(connection)
+      result_package = Result_Package(work, worker_response)
+      self.results_queue.enqueue(result_package)
     
   def handleRequest(self, request, connection):
-    #elif client_request[1:17] == "goldbach?number=":
     input_numbers = request[21:].split("%2C")
     last_number = input_numbers[len(input_numbers)-1]
     input_numbers[len(input_numbers)-1] = last_number.split(" ",1)[0]
-    print(input_numbers[len(input_numbers)-1])
-    start = time()
+    client_address = connection.getsockname()
     
+    start = time()
     #enqueue work
-    self.work_queue.enqueue("wait")
-    for number in range(0,len(input_numbers)):
-      #TODO
-      a = input_numbers[number]
-      print(a)
-      self.work_queue.enqueue(str(number)+","+str((input_numbers[number])))
+    for input_id in range(0,len(input_numbers)):
+      request_size = len(input_numbers)
+      number = input_numbers[input_id]
+      client_id = client_address[1]
+      work_package = Work_Package(input_id, number,client_id, request_size)
 
-    # wait to send results
-    self.can_send_results.acquire()
+      #TODO
+      a = work_package.number
+      print(a)
+
+      self.work_queue.enqueue(work_package)
+    
     msg = ""
-    ordered_results = self.results.get_all()
+    ordered_results = self.response_queue.dequeue()
+    print(ordered_results)
     for result in ordered_results:
-        msg += "<br>"
-        msg += str(ordered_results[result])
+      msg += "<br>"
+      msg += str(result)
     finish = time()
     msg += "<br>"
     msg +=("time: "+str(finish-start))
@@ -165,3 +194,13 @@ class Goldbach_Web:
     self.can_print.acquire()
     print("\n[SERVER] "+message)
     self.can_print.release()
+
+    
+
+
+
+
+
+
+
+
