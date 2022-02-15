@@ -39,7 +39,7 @@ class Server:
         # Handle connection on new thread
         threading.Thread(target = self.handleConnection, args=(connection,),
           daemon = True).start()
-        self.logAppend("Active connections "+ str(threading.active_count() -1))
+        self.logAppend("Active connections "+ str(threading.active_count() -2))
     except KeyboardInterrupt:
       self.stop()
 

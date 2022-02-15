@@ -1,3 +1,4 @@
+from multiprocessing import connection
 from time import time
 import threading
 
@@ -31,7 +32,8 @@ class Results_Dispatcher:
         client_queue.append(result_package.worker_response)
         print("dispatch queue:"+ str(client_queue))
         if len(client_queue) == work_package.request_size:
-          responses.enqueue(client_queue)
+          goldbach_result = (work_package.client_id, client_queue)
+          responses.enqueue(goldbach_result)
           self.queues.pop(work_package.client_id)
 
 
@@ -103,6 +105,9 @@ class Goldbach_Web:
     dispatcher = Results_Dispatcher()
     threading.Thread(target = dispatcher.start, args=(self.results_queue,self.response_queue),
       daemon = True).start()
+
+    threading.Thread(target = self.responseSender, args=(self.response_queue,),
+      daemon = True).start()
     
 
   def handleWorker(self, connection):
@@ -119,14 +124,12 @@ class Goldbach_Web:
     input_numbers = request[21:].split("%2C")
     last_number = input_numbers[len(input_numbers)-1]
     input_numbers[len(input_numbers)-1] = last_number.split(" ",1)[0]
-    client_address = connection.getsockname()
-    
-    start = time()
+
     #enqueue work
     for input_id in range(0,len(input_numbers)):
       request_size = len(input_numbers)
       number = input_numbers[input_id]
-      client_id = client_address[1]
+      client_id = connection
       work_package = Work_Package(input_id, number,client_id, request_size)
 
       #TODO
@@ -134,17 +137,25 @@ class Goldbach_Web:
       print(a)
 
       self.work_queue.enqueue(work_package)
+
+  def responseSender(self, responses):
+    while True:
+
+      goldbach_result = responses.dequeue()
+      connection = goldbach_result[0]
+      results = goldbach_result[1]
+
+      msg = ""
+      ordered_results = results
+      for result in results:
+        msg += "<br>"
+        msg += result
+      # finish = time()
+      # msg += "<br>"
+      # msg +=("time: "+str(finish-start))
+      self.serveGoldbachresults(connection, msg)
+
     
-    msg = ""
-    ordered_results = self.response_queue.dequeue()
-    print(ordered_results)
-    for result in ordered_results:
-      msg += "<br>"
-      msg += str(result)
-    finish = time()
-    msg += "<br>"
-    msg +=("time: "+str(finish-start))
-    self.serveGoldbachresults(connection, msg)
 
   def serveGoldbachresults(self,connection, results):
     title = "Goldbach sums"
