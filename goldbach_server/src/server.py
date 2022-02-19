@@ -7,7 +7,7 @@ PACKAGE_SIZE = 1024
 
 # Server main socket
 WELCOME_PORT = 5000
-SERVER_IP = '172.17.118.225'
+SERVER_IP = '192.168.29.255'
 
 class Server:
   def __init__(self, addr):
