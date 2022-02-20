@@ -7,10 +7,5 @@ Steps:
 - Open script directory: goldbach-s_conjecture\goldbach_server
 - Run script: right click, run with powershell
 - Allow script execution
-- Choose option 1
-
-to restore the original settings:
-- Open script directory: goldbach-s_conjecture\goldbach_server
-- Run script: right click, run with powershell
-- Allow script execution
-- Choose option 2
+- Choose option 1 (configure port, disable firewall)
+- Choose option 2 (reset port, enable firewall)
