@@ -1,4 +1,3 @@
-from multiprocessing import connection
 from time import time
 import threading
 
@@ -11,11 +10,12 @@ class Result_Package():
     self.worker_response = worker_response
 
 class Work_Package():
-  def __init__(self, input_id, number, client_id, request_size):
+  def __init__(self, input_id, number, client_id, request_size, start):
     self.input_id = input_id
     self.number = number
     self.client_id = client_id
     self.request_size = request_size
+    self.start = start
 
 class Results_Dispatcher:
   def __init__(self):
@@ -30,9 +30,10 @@ class Results_Dispatcher:
       else:
         client_queue = self.queues.setdefault(work_package.client_id, [])
         client_queue.append(result_package.worker_response)
-        print("dispatch queue:"+ str(client_queue))
         if len(client_queue) == work_package.request_size:
-          goldbach_result = (work_package.client_id, client_queue)
+          finish = time()
+          final_time = finish - work_package.start
+          goldbach_result = (work_package.client_id, client_queue, final_time)
           responses.enqueue(goldbach_result)
           self.queues.pop(work_package.client_id)
 
@@ -115,73 +116,60 @@ class Goldbach_Web:
       work = self.work_queue.dequeue()
       goldbach_number = work.number
       self.sendMessage(connection, str(goldbach_number))
-      self.logAppend("Client on "+str(work.client_id)+" is working in "+str(goldbach_number))
+      self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
       worker_response = self.recvMessage(connection)
       result_package = Result_Package(work, worker_response)
       self.results_queue.enqueue(result_package)
     
   def handleRequest(self, request, connection):
-    input_numbers = request[21:].split("%2C")
-    last_number = input_numbers[len(input_numbers)-1]
-    input_numbers[len(input_numbers)-1] = last_number.split(" ",1)[0]
-
+    request = request.replace('/goldbach?number=','')
+    print(request)
+    input_numbers = request.split("%2C")
+    
     #enqueue work
     for input_id in range(0,len(input_numbers)):
       request_size = len(input_numbers)
       number = input_numbers[input_id]
       client_id = connection
-      work_package = Work_Package(input_id, number,client_id, request_size)
-
-      #TODO
-      a = work_package.number
-      print(a)
+      start = time()
+      work_package = Work_Package(input_id, number,client_id, request_size, start)
 
       self.work_queue.enqueue(work_package)
 
   def responseSender(self, responses):
     while True:
-
       goldbach_result = responses.dequeue()
       connection = goldbach_result[0]
       results = goldbach_result[1]
+      time = goldbach_result[2]
+      self.serveGoldbachresults(connection, results, time)
 
-      msg = ""
-      ordered_results = results
+  def serveGoldbachresults(self,connection, results, time):
+      header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+      header += "Content-Type: text/html\n\n"
+      
+      response = header
+      response += "<html>"
+      response += "<head>"
+      response += '<meta charset="ascii"/>'
+      response += "<title> Goldbach results</title>"
+      response += "</head>"
+      response += '<body style="background-color:#0979b0;">'
+      response += "<style>body {font-family: monospace} .err {color: red}</style>"
+
+      response += '<style>div { margin: 0 auto; text-align: center; border-radius: 10px; border: 10px solid #000000 width: 500px; } </style> <TABLE WIDTH="100%" HEIGHT="100%"> <TR> <TD VALIGN="MIDDLE" ALIGN="CENTER"> <div>'
+
+      response += "<h1> Goldbach results</h1>"
       for result in results:
-        msg += "<br>"
-        msg += result
-      # finish = time()
-      # msg += "<br>"
-      # msg +=("time: "+str(finish-start))
-      self.serveGoldbachresults(connection, msg)
+        response += "<h2>"+result+"</h2>"
+      response +=("<h2>"+"time: "+str(time)+"</h2>")
 
-    
-
-  def serveGoldbachresults(self,connection, results):
-    title = "Goldbach sums"
-    response = "<html lang=\"en\">\n  <meta charset=\"ascii\"/>\n  <title>" + title + "</title>\n\n"+"<h2>"+ title+"<br>"+results + "</h2>\n\n</html>\n"
-
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-    mimetype = "text/html"
-    header += "Content-Type: "+mimetype+"\n\n"
-
-    home_page = header
-    home_page += response
-    home_page = home_page.encode("utf_8")
-    connection.sendall(home_page)
-
-  def serveHomepage2(self,connection):
-    title = "Goldbach sums"
-    response = "<html lang=\"en\">\n  <meta charset=\"ascii\"/>\n  <title>" + title + "</title>\n  <style>body {font-family: monospace}</style>\n  <h1>" + title + "</h1>\n  <form method=\"get\" action=\"/goldbach\">\n <input type=\"text\" name=\"number\" required/>\n    <button type=\"submit\">Calculate</button>\n  </form>\n</html>\n"
-
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-    mimetype = "text/html"
-    header += "Content-Type: "+mimetype+"\n\n"
-
-    home_page = header
-    home_page += response
-    home_page = home_page.encode("utf_8")
-    connection.sendall(home_page)
+      response += '<h2><a href="/\">Back</a></h2>'
+      response += '</div>'
+      response += "</html>"
+      print(response)
+      response = response.encode("utf_8")
+      connection.sendall(response)
   
   # Add trash and encode a message
   def fill_with_trash(self, message, package_size):

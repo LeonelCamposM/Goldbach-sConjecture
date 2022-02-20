@@ -7,7 +7,6 @@ PACKAGE_SIZE = 1024
 
 # Server main socket
 WELCOME_PORT = 5000
-SERVER_IP = '192.168.29.255'
 
 class Server:
   def __init__(self, addr):
@@ -80,14 +79,34 @@ class Server:
     if header == "":
       self.serveHomepage(connection)
     elif header == "goldbach?number=":
-      self.goldbach.handleRequest(request, connection)
+      self.goldbach.handleRequest(client_request, connection)
     else:
       pass
 
   def serveHomepage(self,connection):
-    self.goldbach.serveHomepage2(connection)
+    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+    header += "Content-Type: text/html\n\n"
+    file = open("html/home.html", "r")
+    home_page = header
+    for line in file:
+      home_page += line
+    home_page = home_page.encode("utf_8")
+    connection.sendall(home_page)
+    # self.goldbach.serveHomepage2(connection)
+
+def extractIp():
+  st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  try:       
+    st.connect(('10.255.255.255', 1))
+    IP = st.getsockname()[0]
+  except Exception:
+    IP = '127.0.0.1'
+  finally:
+    st.close()
+  return IP
 
 if __name__ == "__main__":
+  SERVER_IP = extractIp()
   server_address = (SERVER_IP, WELCOME_PORT)
   server = Server(server_address)
   server.listenClient()

@@ -11,9 +11,12 @@ $condition = $input -eq "1"
 if ( $condition )
 {
     # Server pc configuration
-    $command = "netsh interface portproxy add v4tov4 listenport=$WELCOME_PORT listenaddress=0.0.0.0 connectport=$WELCOME_PORT connectaddress=$WSL_IP"
-    Start-Process powershell -Verb RunAs -Wait -ArgumentList $command
+    $open_port = "netsh interface portproxy add v4tov4 listenport=$WELCOME_PORT listenaddress=0.0.0.0 connectport=$WELCOME_PORT connectaddress=$WSL_IP"
 
+    $unable_firewall = "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False"
+    Start-Process powershell -Verb RunAs -Wait -ArgumentList $open_port
+    Start-Process powershell -Verb RunAs -Wait -ArgumentList $unable_firewall
+    
     netsh interface portproxy show all
     Write-Host "Successful configuration"
     Write-Host " "
@@ -21,8 +24,11 @@ if ( $condition )
 }else
 {
     # Server pc reset
-    $command = "netsh interface portproxy delete v4tov4 listenport=$WELCOME_PORT listenaddress=0.0.0.0"
-    Start-Process powershell -Verb RunAs -Wait -ArgumentList $command
+    $close_port = "netsh interface portproxy delete v4tov4 listenport=$WELCOME_PORT listenaddress=0.0.0.0"
+
+    $able_firewall = "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True"
+    Start-Process powershell -Verb RunAs -Wait -ArgumentList $close_port
+    Start-Process powershell -Verb RunAs -Wait -ArgumentList $able_firewall
     
     netsh interface portproxy show all
     Write-Host "Successful reset"
