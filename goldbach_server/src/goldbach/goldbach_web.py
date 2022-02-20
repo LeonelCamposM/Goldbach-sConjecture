@@ -145,36 +145,27 @@ class Goldbach_Web:
       self.serveGoldbachresults(connection, results, time)
 
   def serveGoldbachresults(self,connection, results, time):
-      header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-      header += "Content-Type: text/html\n\n"
-      
-      response = header
-      response += "<html>"
-      response += "<head>"
-      response += '<meta charset="ascii"/>'
-      response += "<title> Goldbach results</title>"
-      response += "</head>"
-      response += '<body style="background-color:#0979b0;">'
-      response += "<style>body {font-family: monospace} .err {color: red}</style>"
+    results_str = ""
+    for result in results:
+      results_str += result+"<br>"
 
-      response += '<style>div { margin: 0 auto; text-align: center; border-radius: 10px; border: 10px solid #000000 width: 500px; } </style> <TABLE WIDTH="100%" HEIGHT="100%"> <TR> <TD VALIGN="MIDDLE" ALIGN="CENTER"> <div>'
+    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+    header += "Content-Type: text/html\n\n"
+    
+    file = open("html/results.html", "r")
+    response = header
+    for line in file:
+      response += line
 
-      response += "<h1> Goldbach results</h1>"
-      for result in results:
-        response += "<h2>"+result+"</h2>"
-      response +=("<h2>"+"time: "+str(time)+"</h2>")
-
-      response += '<h2><a href="/\">Back</a></h2>'
-      response += '</div>'
-      response += "</html>"
-      print(response)
-      response = response.encode("utf_8")
-      connection.sendall(response)
+    response = response.replace("(time)", str(time))
+    response = response.replace("(result)", results_str)
+    response = response.encode("utf_8")
+    connection.sendall(response)
   
   # Add trash and encode a message
   def fill_with_trash(self, message, package_size):
     for index in range(package_size-len(message)):
-        message += '$'
+      message += '$'
     return message.encode("utf-8")
 
   def sendMessage(self, connection, message):
@@ -182,11 +173,11 @@ class Goldbach_Web:
     connection.sendall(message)
 
   def recvMessage(self, connection):
-      message = connection.recv(PACKAGE_SIZE)
-      message = message.decode("utf-8")
-      # Clean message thrash
-      message = message.replace('$','')
-      return message
+    message = connection.recv(PACKAGE_SIZE)
+    message = message.decode("utf-8")
+    # Clean message thrash
+    message = message.replace('$','')
+    return message
 
     # Thread safe print
   def logAppend(self, message):

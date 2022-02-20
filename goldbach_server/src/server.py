@@ -92,7 +92,6 @@ class Server:
       home_page += line
     home_page = home_page.encode("utf_8")
     connection.sendall(home_page)
-    # self.goldbach.serveHomepage2(connection)
 
 def extractIp():
   st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
