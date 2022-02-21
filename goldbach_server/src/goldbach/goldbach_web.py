@@ -1,5 +1,6 @@
 from time import time
 import threading
+from traceback import print_tb
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
@@ -34,6 +35,9 @@ class Results_Dispatcher:
           finish = time()
           final_time = finish - work_package.start
           goldbach_result = (work_package.client_id, client_queue, final_time)
+          print("\n")
+          print(str(client_queue))
+          print("\n")
           responses.enqueue(goldbach_result)
           self.queues.pop(work_package.client_id)
 
@@ -117,7 +121,8 @@ class Goldbach_Web:
       goldbach_number = work.number
       self.sendMessage(connection, str(goldbach_number))
       self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
-      worker_response = self.recvMessage(connection)
+      worker_response = self.recvWorkerMessage(connection)
+      print("lego "+str(worker_response))
       result_package = Result_Package(work, worker_response)
       self.results_queue.enqueue(result_package)
     
@@ -133,7 +138,7 @@ class Goldbach_Web:
       client_id = connection
       start = time()
       work_package = Work_Package(input_id, number,client_id, request_size, start)
-
+      print(work_package.request_size, work_package.number)
       self.work_queue.enqueue(work_package)
 
   def responseSender(self, responses):
@@ -143,12 +148,13 @@ class Goldbach_Web:
       results = goldbach_result[1]
       time = goldbach_result[2]
       self.serveGoldbachresults(connection, results, time)
+      connection.close()
 
   def serveGoldbachresults(self,connection, results, time):
     results_str = ""
     for result in results:
       results_str += str(result[0])+"<br>"+"<br>"
-
+    self.logAppend(results_str)
     header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
     header += "Content-Type: text/html\n\n"
     
@@ -159,6 +165,7 @@ class Goldbach_Web:
 
     response = response.replace("(time)", str(round(time,5)))
     response = response.replace("(result)", results_str)
+    # self.logAppend(response)
     response = response.encode("utf_8")
     connection.sendall(response)
   
@@ -179,10 +186,27 @@ class Goldbach_Web:
     message = message.replace('$','')
     return message
 
+  def recvWorkerMessage(self, connection):
+    buffer = ""
+    message = ""
+    while True:
+      message = connection.recv(PACKAGE_SIZE)
+      print("mensajito "+str(message))
+      message = message.decode("utf-8")
+      # Clean message thrash
+      message = message.replace('$','')
+      if "end" in message:
+        message = message.replace('end','')
+        buffer += message
+        break
+      else:
+        buffer += message
+    return buffer
+
     # Thread safe print
   def logAppend(self, message):
     self.can_print.acquire()
-    print("\n[SERVER] "+message)
+    print("\n[Goldbach] "+message)
     self.can_print.release()
 
     

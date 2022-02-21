@@ -29,9 +29,14 @@ class Worker():
       else:
         libGoldbach.controller_run(int(work)) 
         results = open('Output.txt','r')
-        line = results.readline()
+        lines = results.readlines()
+        response = ""
+        for line in lines:
+          response+= line
+        print(response)
         os.remove("Output.txt")
-        self.sendMessage(self.server_socket, line)
+        self.sendMessage(self.server_socket, response)
+        self.sendMessage(self.server_socket, "end")
 
   def stop(self):
     self.logAppend("closing sockets...")
