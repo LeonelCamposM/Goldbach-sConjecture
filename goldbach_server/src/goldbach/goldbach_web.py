@@ -147,7 +147,7 @@ class Goldbach_Web:
   def serveGoldbachresults(self,connection, results, time):
     results_str = ""
     for result in results:
-      results_str += str(result[0])+"<br>"
+      results_str += str(result[0])+"<br>"+"<br>"
 
     header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
     header += "Content-Type: text/html\n\n"
@@ -157,7 +157,7 @@ class Goldbach_Web:
     for line in file:
       response += line
 
-    response = response.replace("(time)", str(time))
+    response = response.replace("(time)", str(round(time,5)))
     response = response.replace("(result)", results_str)
     response = response.encode("utf_8")
     connection.sendall(response)
