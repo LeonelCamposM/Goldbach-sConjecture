@@ -29,7 +29,7 @@ class Results_Dispatcher:
         break
       else:
         client_queue = self.queues.setdefault(work_package.client_id, [])
-        client_queue.append(result_package.worker_response)
+        client_queue.append((result_package.worker_response, work_package.input_id))
         if len(client_queue) == work_package.request_size:
           finish = time()
           final_time = finish - work_package.start
@@ -147,7 +147,7 @@ class Goldbach_Web:
   def serveGoldbachresults(self,connection, results, time):
     results_str = ""
     for result in results:
-      results_str += result+"<br>"
+      results_str += str(result[0])+"<br>"
 
     header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
     header += "Content-Type: text/html\n\n"
