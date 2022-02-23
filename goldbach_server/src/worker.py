@@ -58,7 +58,6 @@ class Worker():
         message += '$'
     return message.encode("utf-8")
 
-
   def logAppend(self, message):
     print("\n[CLIENT] "+message)
 

@@ -17,27 +17,6 @@ class Work_Package():
     self.request_size = request_size
     self.start = start
 
-class Results_Dispatcher:
-  def __init__(self):
-    self.queues = dict()
-  
-  def start(self, results, responses):
-    while True:
-      result_package = results.dequeue()
-      work_package = result_package.work_package
-      if result_package.worker_response == "stop":
-        break
-      else:
-        client_queue = self.queues.setdefault(work_package.client_id, [])
-        client_queue.append((result_package.worker_response, work_package.input_id))
-        if len(client_queue) == work_package.request_size:
-          finish = time()
-          final_time = finish - work_package.start
-          goldbach_result = (work_package.client_id, client_queue, final_time)
-          responses.enqueue(goldbach_result)
-          self.queues.pop(work_package.client_id)
-
-
 # Thread safe queue, sleep thread when queue is empty
 # Alternate betwen send and rcv 
 class Queue():
@@ -56,120 +35,19 @@ class Queue():
     message = self.queue.pop()
     return message
 
-# Only 1 thread can use it 
-class Dict():
-  def __init__(self):
-    self.storage = dict()
-    self.can_use_storage = threading.Lock()
-
-  def get(self,key):
-    self.can_use_storage.acquire()
-    data = self.storage[key]
-    self.can_use_storage.release()
-    return data.copy()
-
-  def add(self,key, value):
-    self.can_use_storage.acquire()
-    self.storage[key] = value
-    self.can_use_storage.release()
-
-  def delete(self, del_key):
-    position = 0
-    self.can_use_storage.acquire()
-    for key,value in self.storage:
-      if key == del_key:
-        position = key
-    self.storage.remove(position)
-    self.can_use_storage.release()
-
-  def get_all(self):
-    self.can_use_storage.acquire()
-    data = dict(self.storage)
-    self.can_use_storage.release()
-    return data
-  
-  def clear_dict(self):
-    self.can_use_storage.acquire()
-    self.storage = dict()
-    self.can_use_storage.release()
-
 class Goldbach_Web:
   def __init__(self):
     self.work_queue = Queue()
-    self.results_queue = Queue()
+    self.result_queue = Queue()
     self.response_queue = Queue()
-
-    self.results = Dict()
-    self.can_send_results = threading.Semaphore(0)
     self.can_print = threading.Lock()
 
-    dispatcher = Results_Dispatcher()
-    threading.Thread(target = dispatcher.start, args=(self.results_queue,self.response_queue),
+    self.dispatch_queues = dict()
+    threading.Thread(target = self.dispatcher, args=(),
       daemon = True).start()
 
-    threading.Thread(target = self.responseSender, args=(self.response_queue,),
+    threading.Thread(target = self.responseSender, args=(),
       daemon = True).start()
-    
-
-  def handleWorker(self, connection):
-    while True:
-      work = self.work_queue.dequeue()
-      goldbach_number = work.number
-      try: 
-        goldbach_number = int(goldbach_number)
-        valid_number = goldbach_number > 5 or goldbach_number < -5
-        self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
-        if valid_number:
-          self.sendMessage(connection, str(goldbach_number))
-          worker_response = self.recvWorkerMessage(connection)
-          result_package = Result_Package(work, worker_response)
-          self.results_queue.enqueue(result_package)
-        else:
-          result_package = Result_Package(work, str(goldbach_number)+": N/A")
-          self.results_queue.enqueue(result_package)
-      except ValueError:
-        result_package = Result_Package(work, str(goldbach_number)+": N/A")
-        self.results_queue.enqueue(result_package)
-    
-  def handleRequest(self, request, connection):
-    print(request)
-    input_numbers = request.split("%2C")
-    
-    #enqueue work
-    for input_id in range(0,len(input_numbers)):
-      request_size = len(input_numbers)
-      number = input_numbers[input_id]
-      client_id = connection
-      start = time()
-      work_package = Work_Package(input_id, number,client_id, request_size, start)
-      self.work_queue.enqueue(work_package)
-
-  def responseSender(self, responses):
-    while True:
-      goldbach_result = responses.dequeue()
-      connection = goldbach_result[0]
-      results = goldbach_result[1]
-      time = goldbach_result[2]
-      self.serveGoldbachresults(connection, results, time)
-      connection.close()
-
-  def serveGoldbachresults(self,connection, results, time):
-    results_str = ""
-    for result in results:
-      results_str += str(result[0])+"<br>"+"<br>"
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-    header += "Content-Type: text/html\n\n"
-    
-    file = open("html/results.html", "r")
-    response = header
-    for line in file:
-      response += line
-
-    response = response.replace("(time)", str(round(time,5)))
-    response = response.replace("(result)", results_str)
-    # self.logAppend(response)
-    response = response.encode("utf_8")
-    connection.sendall(response)
   
   # Add trash and encode a message
   def fill_with_trash(self, message, package_size):
@@ -184,17 +62,16 @@ class Goldbach_Web:
   def recvMessage(self, connection):
     message = connection.recv(PACKAGE_SIZE)
     message = message.decode("utf-8")
-    # Clean message thrash
     message = message.replace('$','')
     return message
 
+  # Receives packages from the worker until it receive the (end) word
   def recvWorkerMessage(self, connection):
     buffer = ""
     message = ""
     while True:
       message = connection.recv(PACKAGE_SIZE)
       message = message.decode("utf-8")
-      # Clean message thrash
       message = message.replace('$','')
       if "end" in message:
         message = message.replace('end','')
@@ -204,13 +81,101 @@ class Goldbach_Web:
         buffer += message
     return buffer
 
-    # Thread safe print
+  def serveGoldbachresults(self,connection, results, time):
+    results_str = ""
+    for result in results:
+      results_str += str(result[0])+"<br>"+"<br>"
+    html = self.loadHTML("results")
+    html = html.replace("(time)", str(round(time,5)))
+    html = html.replace("(result)", results_str)
+    html = html.encode("utf_8")
+    connection.sendall(html)
+
+  # Add 200 OK status and load html page 
+  # Return html loaded in a string
+  def loadHTML(self, name):
+    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+    header += "Content-Type: text/html\n\n"
+    html = header
+
+    file = open("html/"+str(name)+".html", "r")
+    for line in file:
+      html += line
+    
+    return html
+
+  # Thread safe print
   def logAppend(self, message):
     self.can_print.acquire()
     print("\n[Goldbach] "+message)
     self.can_print.release()
 
-    
+  # [Thread]
+  # Send number to workers and enqueue result in self.result_queue
+  def handleWorker(self, connection):
+    while True:
+      work = self.work_queue.dequeue()
+      goldbach_number = work.number
+      try: 
+        goldbach_number = int(goldbach_number)
+        valid_number = goldbach_number > 5 or goldbach_number < -5
+        self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
+        if valid_number:
+          self.sendMessage(connection, str(goldbach_number))
+          worker_response = self.recvWorkerMessage(connection)
+          result_package = Result_Package(work, worker_response)
+          self.result_queue.enqueue(result_package)
+        else:
+          result_package = Result_Package(work, str(goldbach_number)+": N/A")
+          self.result_queue.enqueue(result_package)
+      except ValueError:
+        result_package = Result_Package(work, str(goldbach_number)+": N/A")
+        self.result_queue.enqueue(result_package)
+  
+  # [Thread]
+  # Produces a work packages from a request 
+  # and queues them in in self.work_queue
+  def handleRequest(self, request, connection):
+    input_numbers = request.split("%2C") 
+    for input_id in range(0,len(input_numbers)):
+      request_size = len(input_numbers)
+      number = input_numbers[input_id]
+      client_id = connection
+      start = time()
+      work_package = Work_Package(input_id, number,client_id, request_size, start)
+      self.work_queue.enqueue(work_package)
+
+  # [Thread]
+  # Create and send html response 
+  # Consumer thread from self.response_queue
+  def responseSender(self):
+    while True:
+      goldbach_result = self.response_queue.dequeue()
+      connection = goldbach_result[0]
+      results = goldbach_result[1]
+      time = goldbach_result[2]
+      self.serveGoldbachresults(connection, results, time)
+      connection.close()
+  
+  # [Thread]
+  # Consumer thread from self.result_queue
+  # Produce on client_queue on self.dispatch_queues
+  # Produce on sel.response whem client_queue is full
+  def dispatcher(self):
+    while True:
+      result_package = self.result_queue.dequeue()
+      work_package = result_package.work_package
+      if result_package.worker_response == "stop":
+        break
+      else:
+        client_queue = self.dispatch_queues.setdefault(work_package.client_id, [])
+        client_queue.append((result_package.worker_response, work_package.input_id))
+        if len(client_queue) == work_package.request_size:
+          finish = time()
+          final_time = finish - work_package.start
+          goldbach_result = (work_package.client_id, client_queue, final_time)
+          self.response_queue.enqueue(goldbach_result)
+          self.dispatch_queues.pop(work_package.client_id)
 
 
 
