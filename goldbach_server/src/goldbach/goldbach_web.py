@@ -1,6 +1,5 @@
 from time import time
 import threading
-from traceback import print_tb
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
@@ -35,9 +34,6 @@ class Results_Dispatcher:
           finish = time()
           final_time = finish - work_package.start
           goldbach_result = (work_package.client_id, client_queue, final_time)
-          print("\n")
-          print(str(client_queue))
-          print("\n")
           responses.enqueue(goldbach_result)
           self.queues.pop(work_package.client_id)
 
@@ -119,15 +115,23 @@ class Goldbach_Web:
     while True:
       work = self.work_queue.dequeue()
       goldbach_number = work.number
-      self.sendMessage(connection, str(goldbach_number))
-      self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
-      worker_response = self.recvWorkerMessage(connection)
-      print("lego "+str(worker_response))
-      result_package = Result_Package(work, worker_response)
-      self.results_queue.enqueue(result_package)
+      try: 
+        goldbach_number = int(goldbach_number)
+        valid_number = goldbach_number > 5 or goldbach_number < -5
+        self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
+        if valid_number:
+          self.sendMessage(connection, str(goldbach_number))
+          worker_response = self.recvWorkerMessage(connection)
+          result_package = Result_Package(work, worker_response)
+          self.results_queue.enqueue(result_package)
+        else:
+          result_package = Result_Package(work, str(goldbach_number)+": N/A")
+          self.results_queue.enqueue(result_package)
+      except ValueError:
+        result_package = Result_Package(work, str(goldbach_number)+": N/A")
+        self.results_queue.enqueue(result_package)
     
   def handleRequest(self, request, connection):
-    request = request.replace('/goldbach?number=','')
     print(request)
     input_numbers = request.split("%2C")
     
@@ -138,7 +142,6 @@ class Goldbach_Web:
       client_id = connection
       start = time()
       work_package = Work_Package(input_id, number,client_id, request_size, start)
-      print(work_package.request_size, work_package.number)
       self.work_queue.enqueue(work_package)
 
   def responseSender(self, responses):
@@ -154,7 +157,6 @@ class Goldbach_Web:
     results_str = ""
     for result in results:
       results_str += str(result[0])+"<br>"+"<br>"
-    self.logAppend(results_str)
     header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
     header += "Content-Type: text/html\n\n"
     
@@ -191,7 +193,6 @@ class Goldbach_Web:
     message = ""
     while True:
       message = connection.recv(PACKAGE_SIZE)
-      print("mensajito "+str(message))
       message = message.decode("utf-8")
       # Clean message thrash
       message = message.replace('$','')

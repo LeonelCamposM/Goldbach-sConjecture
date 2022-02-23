@@ -2,60 +2,107 @@ import socket
 import threading
 import goldbach.goldbach_web as Goldbach_Web
 
-# Protocol defined message size
-PACKAGE_SIZE = 1024
-
 # Server main socket
 WELCOME_PORT = 5000
 
+# Worker-Server 
+# Protocol defined message size
+PACKAGE_SIZE = 1024
+# TODO
+
 class Server:
-  def __init__(self, addr):
-    # Create a TCP socket to recieve clients
+  def __init__(self, port):
+    ip = self.getIP()
+
     self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     
-    # Thread safe print
     self.can_print = threading.Lock()
-    self.logAppend("Start listening on "+str(addr[0])+" port "+str(addr[1]))
+    self.logAppend("Start listening on "+str(ip)+" port "+str(port))
 
-    # Start listening on main socket
-    self.welcome_socket.bind(addr)
+    address = (ip,port)
+    self.welcome_socket.bind(address)
     self.welcome_socket.listen(1)
 
     # Web apps
     self.goldbach = Goldbach_Web.Goldbach_Web()
-    
+  
+  def getIP(self):
+    ip = 'NULL'
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:       
+      sock.connect(('8.8.8.8', 1))
+      ip = sock.getsockname()[0]
+    except Exception:
+      pass
+    sock.close()
+    assert ip != 'NULL', "[SERVER] Could not get machine ip\n"
+    return ip
+
+  # Thread safe print
+  def logAppend(self, message):
+    self.can_print.acquire()
+    print("\n[SERVER] "+message)
+    self.can_print.release()
+
+  def listenClient(self):
+    try:
+      while True:
+        connection, client_address = self.welcome_socket.accept()
+        # Handle client on new thread with connection socket
+        threading.Thread(target = self.handleConnection, args=(connection,),
+          daemon = True).start()
+    except KeyboardInterrupt:
+      self.stop()
+  
   def stop(self):
     self.logAppend("Shutting down server")
     self.welcome_socket.close()
 
-  def listenClient(self):
-    try:
-      # Main thread always keep listening
-      while True:
-        # Recieve connection from new client
-        connection, client_address = self.welcome_socket.accept()
-        # Handle connection on new thread
-        threading.Thread(target = self.handleConnection, args=(connection,),
-          daemon = True).start()
-        self.logAppend("Active connections "+ str(threading.active_count() -2))
-    except KeyboardInterrupt:
-      self.stop()
-
-  # Handle client, worker connection
   def handleConnection(self, connection):
-    client_address = connection.getsockname()
     rcvd_message = self.recvMessage(connection)
-    connection_info = "New connection from: "+ str(client_address[0]) +" port "+str(client_address[1])
+    message = self.analyzeMessage(rcvd_message, connection)
 
-    if rcvd_message == "worker":
-      connection_info += " ("+rcvd_message+")"
-      self.logAppend(connection_info)
+    connection_type = message[0]
+    request = message[1]
+
+    if connection_type == "worker":
       self.goldbach.handleWorker(connection)
+    elif connection_type == "home":
+      self.serveHomepage(connection)
+    elif connection_type == "goldbach":
+      self.goldbach.handleRequest(request, connection)
     else:
-      connection_info += " ("+"client"+")"
+      # self.logAppend("Request :"+request+" to "+connection_type+" has been ignored")
+      pass
+
+  # Return connection type, request
+  # Connection types: worker, home, goldbach
+  def analyzeMessage(self, rcvd_message, connection):
+    address = connection.getsockname()
+    connection_info = "New connection from: "+ str(address[0]) +" port "+str(address[1])+" ("
+
+    connection_type = ""
+    request = ""
+    if rcvd_message == "worker":
+      connection_type = rcvd_message
+    else:
+      request = (rcvd_message.split(" "))[1]
+      header = str(request)[1:17]
+      request = request.replace(header,"")
+      request = request.replace("/","")
+
+      if header == "":
+        connection_type = "home"
+      elif header == "goldbach?number=":
+        connection_type= "goldbach"
+      else:
+        connection_type= header
+
+    connection_info += connection_type+")"
+    if connection_type != "favicon.ico":
       self.logAppend(connection_info)
-      self.handleClient(connection, rcvd_message)
+    return (connection_type, request)
   
   def sendMessage(self, connection, message):
     message = message.encode("utf-8")
@@ -66,46 +113,25 @@ class Server:
     message = message.decode("utf-8")
     message = message.replace('$','')
     return message
-
-  # Thread safe print
-  def logAppend(self, message):
-    self.can_print.acquire()
-    print("\n[SERVER] "+message)
-    self.can_print.release()
     
-  def handleClient(self, connection, request):
-    client_request = (request.split(" "))[1]
-    header = str(client_request)[1:17]
-    if header == "":
-      self.serveHomepage(connection)
-    elif header == "goldbach?number=":
-      self.goldbach.handleRequest(client_request, connection)
-    else:
-      pass
-
   def serveHomepage(self,connection):
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-    header += "Content-Type: text/html\n\n"
-    file = open("html/home.html", "r")
-    home_page = header
-    for line in file:
-      home_page += line
+    home_page = self.loadHTML("home")
     home_page = home_page.encode("utf_8")
     connection.sendall(home_page)
+  
+  # Add 200 OK status and load html page 
+  # Return html loaded in a string
+  def loadHTML(self, name):
+    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+    header += "Content-Type: text/html\n\n"
+    html = header
 
-def extractIp():
-  st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  try:       
-    st.connect(('10.255.255.255', 1))
-    IP = st.getsockname()[0]
-  except Exception:
-    IP = '127.0.0.1'
-  finally:
-    st.close()
-  return IP
-
+    file = open("html/"+str(name)+".html", "r")
+    for line in file:
+      html += line
+    
+    return html
+    
 if __name__ == "__main__":
-  SERVER_IP = extractIp()
-  server_address = (SERVER_IP, WELCOME_PORT)
-  server = Server(server_address)
+  server = Server(WELCOME_PORT)
   server.listenClient()

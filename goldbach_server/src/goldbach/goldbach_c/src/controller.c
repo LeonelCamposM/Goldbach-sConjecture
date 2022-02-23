@@ -130,7 +130,6 @@ void print_results(dynamic_array_t* input, int64_t** results,
             write_output(": ", 0, false);
             write_output("", sums, true);
             write_output(" sums", 0, false);
-            write_output(": ", 0, false);
           }
         }
       }
