@@ -1,14 +1,7 @@
 import socket
 import threading
 import goldbach.goldbach_web as Goldbach_Web
-
-# Server main socket
-WELCOME_PORT = 5000
-
-# Worker-Server 
-# Protocol defined message size
-PACKAGE_SIZE = 1024
-# TODO
+import helpers as Helpers
 
 class Server:
   def __init__(self, port):
@@ -60,7 +53,7 @@ class Server:
     self.welcome_socket.close()
 
   def handleConnection(self, connection):
-    rcvd_message = self.recvMessage(connection)
+    rcvd_message = Helpers.recvWebMessage(connection)
     message = self.analyzeMessage(rcvd_message, connection)
 
     connection_type = message[0]
@@ -81,7 +74,6 @@ class Server:
   def analyzeMessage(self, rcvd_message, connection):
     address = connection.getsockname()
     connection_info = "New connection from: "+ str(address[0]) +" port "+str(address[1])+" ("
-
     connection_type = ""
     request = ""
     if rcvd_message == "worker":
@@ -91,47 +83,21 @@ class Server:
       header = str(request)[1:17]
       request = request.replace(header,"")
       request = request.replace("/","")
-
       if header == "":
         connection_type = "home"
       elif header == "goldbach?number=":
         connection_type= "goldbach"
       else:
         connection_type= header
-
     connection_info += connection_type+")"
     if connection_type != "favicon.ico":
       self.logAppend(connection_info)
     return (connection_type, request)
-  
-  def sendMessage(self, connection, message):
-    message = message.encode("utf-8")
-    connection.sendall(message)
-
-  def recvMessage(self, connection):
-    message = connection.recv(PACKAGE_SIZE)
-    message = message.decode("utf-8")
-    message = message.replace('$','')
-    return message
     
   def serveHomepage(self,connection):
-    home_page = self.loadHTML("home")
-    home_page = home_page.encode("utf_8")
-    connection.sendall(home_page)
-  
-  # Add 200 OK status and load html page 
-  # Return html loaded in a string
-  def loadHTML(self, name):
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-    header += "Content-Type: text/html\n\n"
-    html = header
+    home_page = Helpers.loadHTML("home")
+    Helpers.sendWebMessage(home_page, connection)
 
-    file = open("html/"+str(name)+".html", "r")
-    for line in file:
-      html += line
-    
-    return html
-    
 if __name__ == "__main__":
-  server = Server(WELCOME_PORT)
+  server = Server(Helpers.WELCOME_PORT)
   server.listenClient()

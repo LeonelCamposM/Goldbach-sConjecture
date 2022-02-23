@@ -1,5 +1,6 @@
 from time import time
 import threading
+import helpers as Helpers
 
 # Protocol defined message size
 PACKAGE_SIZE = 1024
@@ -48,61 +49,16 @@ class Goldbach_Web:
 
     threading.Thread(target = self.responseSender, args=(),
       daemon = True).start()
-  
-  # Add trash and encode a message
-  def fill_with_trash(self, message, package_size):
-    for index in range(package_size-len(message)):
-      message += '$'
-    return message.encode("utf-8")
-
-  def sendMessage(self, connection, message):
-    message = self.fill_with_trash(message, PACKAGE_SIZE)
-    connection.sendall(message)
-
-  def recvMessage(self, connection):
-    message = connection.recv(PACKAGE_SIZE)
-    message = message.decode("utf-8")
-    message = message.replace('$','')
-    return message
-
-  # Receives packages from the worker until it receive the (end) word
-  def recvWorkerMessage(self, connection):
-    buffer = ""
-    message = ""
-    while True:
-      message = connection.recv(PACKAGE_SIZE)
-      message = message.decode("utf-8")
-      message = message.replace('$','')
-      if "end" in message:
-        message = message.replace('end','')
-        buffer += message
-        break
-      else:
-        buffer += message
-    return buffer
 
   def serveGoldbachresults(self,connection, results, time):
     results_str = ""
     for result in results:
       results_str += str(result[0])+"<br>"+"<br>"
-    html = self.loadHTML("results")
+    html = Helpers.loadHTML("results")
     html = html.replace("(time)", str(round(time,5)))
     html = html.replace("(result)", results_str)
     html = html.encode("utf_8")
     connection.sendall(html)
-
-  # Add 200 OK status and load html page 
-  # Return html loaded in a string
-  def loadHTML(self, name):
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
-    header += "Content-Type: text/html\n\n"
-    html = header
-
-    file = open("html/"+str(name)+".html", "r")
-    for line in file:
-      html += line
-    
-    return html
 
   # Thread safe print
   def logAppend(self, message):
@@ -121,8 +77,8 @@ class Goldbach_Web:
         valid_number = goldbach_number > 5 or goldbach_number < -5
         self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
         if valid_number:
-          self.sendMessage(connection, str(goldbach_number))
-          worker_response = self.recvWorkerMessage(connection)
+          Helpers.sendWebMessage(str(goldbach_number), connection)
+          worker_response = Helpers.recvWorkerMessage(connection)
           result_package = Result_Package(work, worker_response)
           self.result_queue.enqueue(result_package)
         else:
