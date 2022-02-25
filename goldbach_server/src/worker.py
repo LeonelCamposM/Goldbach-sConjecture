@@ -2,7 +2,9 @@ import socket
 import os
 from ctypes import *
 import helpers as Helpers
-libGoldbach = CDLL("./goldbach/goldbach_c/bin/libGoldbach.so")
+libGoldbach = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
+# libGoldbach = CDLL("./goldbach/bin/lib_goldbach_omp.so")
+# libGoldbach = CDLL("./goldbach/bin/lib_goldbach_serial.so")
 
 class Worker():
   def __init__(self):

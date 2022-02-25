@@ -19,9 +19,7 @@ typedef struct private_data {
   shared_data_t* shared_data;
 } private_data_t;
 
-int start(int argc, char* argv[]);
-
-int controller_run(int64_t value, int threads);
+int controller_run(int64_t value);
 
 /**
 *@brief generic rutine for init memory, create threads do work and join threads
@@ -102,24 +100,25 @@ void show_array_addings(int64_t* array, int64_t sums,
 */
 void free_results(int64_t** results, int64_t thread_count);
 
-int main(int argc, char* argv[]) {
+int write_output(char* mesage, size_t number, bool number_flag);
+
+int main() {
   int error = EXIT_SUCCESS;
-  error = start(argc, argv);
   return error;
 }
 
-int start(int argc, char* argv[]){
-  int error = EXIT_SUCCESS;
-  int64_t value = 0;
-  while (fscanf(stdin, "%" SCNd64, &value) == 1) {
-    error = verify_input(value);
-    if (error == EXIT_SUCCESS) {
-      int threads = analyze_arguments(argc, argv);
-      controller_run(value, threads);
-    }
-  }
-return error;
-}
+// int start(int argc, char* argv[]){
+//   int error = EXIT_SUCCESS;
+//   int64_t value = 0;
+//   while (fscanf(stdin, "%" SCNd64, &value) == 1) {
+//     error = verify_input(value);
+//     if (error == EXIT_SUCCESS) {
+//       int threads = analyze_arguments(argc, argv);
+//       controller_run(value, threads);
+//     }
+//   }
+// return error;
+// }
 
 void init_shared_data(shared_data_t* shared_data, int threads, int64_t value) {
   //  Select thread number
@@ -136,7 +135,7 @@ void init_shared_data(shared_data_t* shared_data, int threads, int64_t value) {
   report_and_exit(shared_data->results == NULL, "could not create results array");
 }
 
-int controller_run(int64_t value, int threads) {
+int controller_run(int64_t value) {
   int error = EXIT_SUCCESS;
   shared_data_t* shared_data = (shared_data_t*)
     calloc(1, sizeof(shared_data_t));
@@ -149,6 +148,8 @@ int controller_run(int64_t value, int threads) {
     value *= -1;
   }
 
+  int threads = sysconf(_SC_NPROCESSORS_ONLN);
+
   init_shared_data(shared_data, threads, value);
 
   //  concurrent work
@@ -157,7 +158,6 @@ int controller_run(int64_t value, int threads) {
   // 1 thread print
   int num_addings = (value % 2 == 0)? 2 : 3;
   print_results(num_addings, value, list, shared_data);
-  printf("\n");
   free_results(shared_data->results, shared_data->thread_count);
   free(shared_data);
   return error;
@@ -272,10 +272,12 @@ void print_results(int64_t num_addings, int64_t value, bool list, void* data) {
 
     if (list == true) {
       if (index == 0) {
-        printf("-");
-        printf("%" PRIi64 ": ", value);
-        printf("%" PRIi64 " sums", sums);
-        printf(": ");
+        write_output("-", 0, false);
+        write_output("",value, true);
+        write_output(": ", 0, false);
+        write_output("", sums, true);
+        write_output(" sums", 0, false);
+        write_output(": ", 0, false);
       }
       if (thread_sums != 0) {
         show_array_addings(shared_data->results[index],
@@ -284,11 +286,14 @@ void print_results(int64_t num_addings, int64_t value, bool list, void* data) {
       }
     } else {
       if (index == 0) {
-        printf("%" PRIi64 ": ", value);
-        printf("%" PRIi64 " sums", sums);
+        write_output("",value, true);
+        write_output(": ", 0, false);
+        write_output("", sums, true);
+        write_output(" sums", 0, false);
       }
     }
   }
+  write_output("\n",0, false);
 }
 
 int64_t count_array_sums(int64_t* array, int num_addings) {
@@ -306,21 +311,41 @@ void show_array_addings(int64_t* array, int64_t sums,
   int64_t iterAddings = 0;
   while (iterAddings <= (num_addings*sums)-num_addings) {
     if (iterAddings != 0) {
-      printf(", ");
+      write_output(", ", 0, false);
     } else {
       if (!first) {
-        printf(", ");
+        write_output(", ", 0, false);
       }
     }
-    printf("%" PRIi64 " + ", array[iterAddings]);
+    write_output("", array[iterAddings],true);
+    write_output(" + ", 0, false);
     if (num_addings == 3) {
-      printf("%" PRIi64 " + ", array[iterAddings+1]);
-      printf("%" PRIi64 , array[iterAddings+2]);
+      write_output("", array[iterAddings+1],true);
+      write_output(" + ", 0, false);
+      write_output("", array[iterAddings+2],true);
     } else {
-      printf("%" PRIi64 , array[iterAddings+1]);
+      write_output("", array[iterAddings+1],true);
     }
     iterAddings+=num_addings;
   }
+}
+
+int write_output(char* mesage, size_t number, bool number_flag) {
+  FILE *file = fopen("Output.txt", "a+");
+  if (file == NULL) {
+      printf("cannot open output");
+      return 1;
+  }else{
+    if(number_flag == false){
+      fprintf(file, "%s", mesage);
+    }else{
+      char str_number[100];
+      sprintf(str_number, "%li", number);
+      fprintf(file, "%s", str_number);
+    }
+  }
+  fclose(file);
+  return 0;
 }
 
 void free_results(int64_t** results, int64_t thread_count) {

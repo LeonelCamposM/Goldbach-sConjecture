@@ -68,8 +68,9 @@ bool analize_arguments(int64_t value);
 *@brief get goldbach sums of a value
 *@param value number 
 */
-void get_goldbach_sums(int64_t value);
+void controller_run(int64_t value);
 
+int write_output(char* mesage, size_t number, bool number_flag);
 
 
 void report_and_exit(bool error_condition, char* report_name) {
@@ -156,14 +157,16 @@ void show_addings(int64_t* array, int num_addings, int sums){
   int64_t iterAddings = 0;
   while (iterAddings <= num_addings*sums-num_addings) {
     if (iterAddings != 0) {
-      printf(", ");
+      write_output(", ", 0, false);
     }
-    printf("%" PRIi64 " + ", array[iterAddings]);
+    write_output("", array[iterAddings],true);
+    write_output(" + ", 0, false);
     if (num_addings == 3) {
-      printf("%" PRIi64 " + ", array[iterAddings+1]);
-      printf("%" PRIi64 , array[iterAddings+2]);
+      write_output("", array[iterAddings+1],true);
+      write_output(" + ", 0, false);
+      write_output("", array[iterAddings+2],true);
     } else {
-        printf("%" PRIi64 , array[iterAddings+1]);
+        write_output("", array[iterAddings+1],true);
       }
     iterAddings+=num_addings;
   }
@@ -171,15 +174,19 @@ void show_addings(int64_t* array, int num_addings, int sums){
 
 void show_goldbach_results(dynamic_array_t* array, int sums, int64_t num, bool list, int num_addings) {
   if (list == true) {
-    printf("-");
-    printf("%" PRIi64 ": ", num);
-    printf("%i sums", sums);
-    printf(": ");
+    write_output("-", 0, false);
+    write_output("",num, true);
+    write_output(": ", 0, false);
+    write_output("", sums, true);
+    write_output(" sums", 0, false);
+    write_output(": ", 0, false);
     show_addings(array->elements, num_addings, sums);
   } 
   else {
-    printf("%" PRIi64 ": ", num);
-    printf("%i sums", sums);
+    write_output("",num, true);
+    write_output(": ", 0, false);
+    write_output("", sums, true);
+    write_output(" sums", 0, false);
   }
 }
 
@@ -194,7 +201,7 @@ bool analize_arguments(int64_t value) {
   return valid;
 }
 
-void get_goldbach_sums(int64_t value) {
+void controller_run(int64_t value) {
   // list : true = list the sum, false = don't list the sums
   bool list = false;
   if (value < 0) {
@@ -217,8 +224,8 @@ void get_goldbach_sums(int64_t value) {
   }
   int sums = count(addings, num_addings);
   show_goldbach_results(addings, sums, value, list, num_addings);
+  write_output("\n",0, false);
   array_destroy(addings);
-  printf("\n");
 }
 
 void run() {
@@ -226,51 +233,30 @@ void run() {
   while (fscanf(stdin, "%" SCNd64, &value) == 1) {
     bool valid_input = analize_arguments(value);
     if (valid_input) {
-      get_goldbach_sums(value);
+      controller_run(value);
     }
   }
 }
 
-
-// https://www.delftstack.com/es/howto/c/concatenate-strings-in-c/
-void *concat_strings(void* restrict dst, const void* restrict src, int c, size_t n)
-{
-  const char *s = src;
-  for (char *ret = dst; n; ++ret, ++s, --n)
-  {
-    *ret = *s;
-    if ((unsigned char)*ret == (unsigned char)c)
-        return ret + 1;
+int write_output(char* mesage, size_t number, bool number_flag) {
+  FILE *file = fopen("Output.txt", "a+");
+  if (file == NULL) {
+      printf("cannot open output");
+      return 1;
+  }else{
+    if(number_flag == false){
+      fprintf(file, "%s", mesage);
+    }else{
+      char str_number[100];
+      sprintf(str_number, "%li", number);
+      fprintf(file, "%s", str_number);
+    }
   }
+  fclose(file);
   return 0;
-}
-
-int string_cat(const char* str1, const char* str2, char* buffer) {
-  concat_strings(concat_strings(buffer, str1, '\0', MAX) - 1, str2, '\0', MAX);
-  return 0;
-}
-
-void int64ToChar(char a[MAX], int64_t n) {
-  memcpy(a, &n, 8);
 }
 
 int main() {
-  // const char* str1 = "krmelo";
-  // const char* str2 = " guapo";
-  // char buffer[MAX];
-
-  // char numero[MAX];
-  int64_t num = 400;
-  // sprintf(numero, "%lld", num);
-  // // int64ToChar(numero,num);
-
-  // // string_cat("adaaaaaa", str2, buffer);
-  // // string_cat(buffer, numero, buffer);
-
-  // fprintf("%s\n",numero);
-   char str[80];
-   sprintf(str, "Value of Pi = %li", num);
-   puts(str);
-  //run();
+  run();
   return EXIT_SUCCESS;
 }

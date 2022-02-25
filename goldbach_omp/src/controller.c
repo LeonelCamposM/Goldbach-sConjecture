@@ -10,7 +10,7 @@
 #include "dynamic_array.h"
 #include "prod_cons_omp.h"
 
-int controller_run(size_t threads);
+int controller_run(int64_t goldbach_num);
 
 void print_results(dynamic_array_t* input, int64_t** results,
   size_t thread_count);
@@ -41,7 +41,7 @@ void show_array_addings(int64_t* array, int64_t sums,
 */
 void free_results(int64_t** results, int64_t thread_count);
 
-int controller_run(size_t threads) {
+int controller_run(int64_t  goldbach_num) {
   int error = EXIT_SUCCESS;
 
   prod_cons_data_t* data = (prod_cons_data_t*)
@@ -49,9 +49,9 @@ int controller_run(size_t threads) {
   report_and_exit(data == NULL, "Could not create producer consumer data");
 
   data->input_numbers = read_input();
-  // array_print(data->input_numbers);
+  array_append(data->input_numbers, goldbach_num);
 
-  data->threads = threads != 0 ? threads : sysconf(_SC_NPROCESSORS_ONLN);
+  data->threads = sysconf(_SC_NPROCESSORS_ONLN);
 
   //int64_t** results
   data->results = (int64_t**)
@@ -60,7 +60,6 @@ int controller_run(size_t threads) {
 
   data->results = prod_cons_omp_start(data, data->results);
   print_results(data->input_numbers, data->results, data->threads);
-  //printf("\n");
   free_results(data->results, data->threads);
   free(data);
   return error;
@@ -103,18 +102,20 @@ void print_results(dynamic_array_t* input, int64_t** results,
       }
 
       //  print array stored in results[index]
-      for (int64_t index = start; index < finish; index++) {
-        int64_t thread_sums =
+      for (size_t index = start; index < finish; index++) {
+        size_t thread_sums =
           count_array_sums(results[index], numAddings);
 
         //  list sums
         if (list == true) {
           // print format -value : x sums
           if (index == start) {
-            printf("-");
-            printf("%" PRIi64 ": ", value);
-            printf("%" PRIi64 " sums", sums);
-            printf(": ");
+            write_output("-", 0, false);
+            write_output("",value, true);
+            write_output(": ", 0, false);
+            write_output("", sums, true);
+            write_output(" sums", 0, false);
+            write_output(": ", 0, false);
           }
           // print array
           if (thread_sums != 0) {
@@ -125,12 +126,14 @@ void print_results(dynamic_array_t* input, int64_t** results,
         } else {
           //  dont list sums
           if (index == start) {
-            printf("%" PRIi64 ": ", value);
-            printf("%" PRIi64 " sums", sums);
+            write_output("",value, true);
+            write_output(": ", 0, false);
+            write_output("", sums, true);
+            write_output(" sums", 0, false);
           }
         }
       }
-      printf("\n");
+      write_output("\n",0, false);
     }
   }
 }
@@ -153,18 +156,20 @@ void show_array_addings(int64_t* array, int64_t sums,
   int64_t iterAddings = 0;
   while (iterAddings <= (num_addings*sums)-num_addings) {
     if (iterAddings != 0) {
-      printf(", ");
+      write_output(", ", 0, false);
     } else {
       if (!first) {
-        printf(", ");
+        write_output(", ", 0, false);
       }
     }
-    printf("%" PRIi64 " + ", array[iterAddings]);
+    write_output("", array[iterAddings],true);
+    write_output(" + ", 0, false);
     if (num_addings == 3) {
-      printf("%" PRIi64 " + ", array[iterAddings+1]);
-      printf("%" PRIi64 , array[iterAddings+2]);
+      write_output("", array[iterAddings+1],true);
+      write_output(" + ", 0, false);
+      write_output("", array[iterAddings+2],true);
     } else {
-      printf("%" PRIi64 , array[iterAddings+1]);
+      write_output("", array[iterAddings+1],true);
     }
     iterAddings+=num_addings;
   }
@@ -177,9 +182,6 @@ void free_results(int64_t** results, int64_t thread_count) {
   free(results);
 }
 
-int main(int argc, char* argv[]) {
-  int error = EXIT_SUCCESS;
-  size_t threads = analyze_arguments(argc, argv);
-  controller_run(threads);
-  return error;
+int main(){
+  return 0;
 }

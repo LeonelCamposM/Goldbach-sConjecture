@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <assert.h>
 #include "dynamic_array.h"
+#include <stdio.h>
+#include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 dynamic_array_t* read_input();
 
@@ -14,13 +18,6 @@ dynamic_array_t* read_input();
 */
 int verify_input(int64_t value);
 
-/**
-*@brief analize given arguments : number of threads
-*@details assert for invalid thread count
-*@param argc number of args
-*@param argv char of args
-*@return valid thread count 
-*/
-int64_t analyze_arguments(int argc, char* argv[]);
+int write_output(char* mesage, size_t number, bool number_flag);
 
 #endif  // input_handler_H
