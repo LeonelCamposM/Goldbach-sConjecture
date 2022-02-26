@@ -64,7 +64,12 @@ class Server:
     elif connection_type == "home":
       self.serveHomepage(connection)
     elif connection_type == "goldbach":
-      self.goldbach.handleRequest(request, connection)
+      request = request.split("&")
+      calculator = request[0].replace("calculator=","")
+      numbers = request[1].replace("number=","")
+      print("numb:"+ numbers)
+      print("calc:"+ calculator)
+      self.goldbach.handleRequest(numbers, calculator, connection)
     else:
       # self.logAppend("Request :"+request+" to "+connection_type+" has been ignored")
       pass
@@ -80,9 +85,10 @@ class Server:
       connection_type = rcvd_message
     else:
       request = (rcvd_message.split(" "))[1]
-      header = str(request)[1:17]
+      header = str(request)[1:9]
       request = request.replace(header,"")
       request = request.replace("/","")
+      request = request.replace("?","")
       if header == "":
         connection_type = "home"
       elif header == "goldbach?number=":
@@ -90,13 +96,14 @@ class Server:
       else:
         connection_type= header
     connection_info += connection_type+")"
-    if connection_type != "favicon.ico":
+    if connection_type != "favicon.":
       self.logAppend(connection_info)
     return (connection_type, request)
     
   def serveHomepage(self,connection):
     home_page = Helpers.loadHTML("home")
     Helpers.sendWebMessage(home_page, connection)
+    connection.close()
 
 if __name__ == "__main__":
   server = Server(Helpers.WELCOME_PORT)

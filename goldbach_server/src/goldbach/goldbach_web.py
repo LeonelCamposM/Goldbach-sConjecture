@@ -11,12 +11,13 @@ class Result_Package():
     self.worker_response = worker_response
 
 class Work_Package():
-  def __init__(self, input_id, number, client_id, request_size, start):
+  def __init__(self, input_id, number, client_id, request_size, start, calculator):
     self.input_id = input_id
     self.number = number
     self.client_id = client_id
     self.request_size = request_size
     self.start = start
+    self.calculator = calculator
 
 # Thread safe queue, sleep thread when queue is empty
 # Alternate betwen send and rcv 
@@ -77,7 +78,8 @@ class Goldbach_Web:
         valid_number = goldbach_number > 5 or goldbach_number < -5
         self.logAppend("Client on "+str(work.client_id.getsockname()[1])+" is working in "+str(goldbach_number))
         if valid_number:
-          Helpers.sendWebMessage(str(goldbach_number), connection)
+          worker_request = str(goldbach_number)+","+work.calculator
+          Helpers.sendWebMessage(worker_request, connection)
           worker_response = Helpers.recvWorkerMessage(connection)
           result_package = Result_Package(work, worker_response)
           self.result_queue.enqueue(result_package)
@@ -91,14 +93,14 @@ class Goldbach_Web:
   # [Thread]
   # Produces a work packages from a request 
   # and queues them in in self.work_queue
-  def handleRequest(self, request, connection):
+  def handleRequest(self, request, calculator, connection):
     input_numbers = request.split("%2C") 
     for input_id in range(0,len(input_numbers)):
       request_size = len(input_numbers)
       number = input_numbers[input_id]
       client_id = connection
       start = time()
-      work_package = Work_Package(input_id, number,client_id, request_size, start)
+      work_package = Work_Package(input_id, number,client_id, request_size, start, calculator)
       self.work_queue.enqueue(work_package)
 
   # [Thread]

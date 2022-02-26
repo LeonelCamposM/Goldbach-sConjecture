@@ -22,11 +22,23 @@
           <h1 class="white fs-l3 lh-2 md-fs-xl1 md-lh-1 fw-900 ">Goldbach sums </h1>
             <div>
             <form method="get" action="goldbach" >
-                <input type="text" name="number"
-                    class="input-lg half bw-0 fw-200 bg-indigo-lightest-10 white ph-indigo-lightest focus-white opacity-80 fs-m1 py-5 min-w-25vw br-r-0"
-                    placeholder="" required>
-                <button type="submit"
-                    class="button-lg bg-indigo-lightest-20 indigo-lightest focus-white fw-300 fs-m1 mr-0 br-l-0">Calculate</button>
+              
+              <input type="radio" id="serial" name="calculator" value="serial" style="color:white">
+              <label style="color:white" for="serial">Serial</label>
+
+              <input type="radio" id="pthread" name="calculator" value="pthread" style="color:white">
+              <label style="color:white" for="pthread">Pthread</label>
+
+              <input type="radio" id="omp" name="calculator" value="omp" style="color:white">
+              <label   style="color:white" for="omp" >Omp</label>
+              <br><br>
+
+              <input type="text" name="number"
+                  class="input-lg half bw-0 fw-200 bg-indigo-lightest-10 white ph-indigo-lightest focus-white opacity-80 fs-m1 py-5 min-w-25vw br-r-0"
+                  placeholder="" required>
+
+              <button type="submit"
+                  class="button-lg bg-indigo-lightest-20 indigo-lightest focus-white fw-300 fs-m1 mr-0 br-l-0">Calculate</button>
             </form>
             </div> 
           </div>

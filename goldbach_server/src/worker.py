@@ -2,9 +2,10 @@ import socket
 import os
 from ctypes import *
 import helpers as Helpers
-libGoldbach = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
-# libGoldbach = CDLL("./goldbach/bin/lib_goldbach_omp.so")
-# libGoldbach = CDLL("./goldbach/bin/lib_goldbach_serial.so")
+
+goldbach_pthread = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
+goldbach_omp = CDLL("./goldbach/bin/lib_goldbach_omp.so")
+goldbach_serial = CDLL("./goldbach/bin/lib_goldbach_serial.so")
 
 class Worker():
   def __init__(self):
@@ -21,7 +22,7 @@ class Worker():
         self.stop()
         break
       else:
-        libGoldbach.controller_run(int(work)) 
+        self.writeGoldbachResults(work)
         response = self.readGoldbachResult()
         self.logAppend(response)
         Helpers.sendWorkerMessage(self.server_socket, response)
@@ -32,6 +33,18 @@ class Worker():
 
   def logAppend(self, message):
     print("[Worker] "+message)
+  
+  def writeGoldbachResults(self, work):
+    work = work.split(",")
+    goldbach_number = work[0]
+    goldbach_calculator = work[1]
+
+    if goldbach_calculator == "serial":
+      goldbach_serial.controller_run(int(goldbach_number))
+    elif goldbach_calculator == "pthread":
+      goldbach_pthread.controller_run(int(goldbach_number))
+    elif goldbach_calculator == "omp":
+      goldbach_pthread.controller_run(int(goldbach_number))
 
   def readGoldbachResult(self):
     result = ""
