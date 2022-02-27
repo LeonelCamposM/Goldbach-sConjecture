@@ -11,7 +11,7 @@ class Worker():
   def __init__(self):
     self.server_address = (Helpers.SERVER_IP, Helpers.WELCOME_PORT)
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # self.logAppend('Connecting on %s port %s \n' % self.server_address)
+    self.logAppend('Connecting on %s port %s \n' % self.server_address)
 
   def start(self):
     self.server_socket.connect(self.server_address)
@@ -24,7 +24,7 @@ class Worker():
       else:
         self.writeGoldbachResults(work)
         response = self.readGoldbachResult()
-        # self.logAppend(response)
+        self.logAppend(response)
         Helpers.sendWorkerMessage(self.server_socket, response)
 
   def stop(self):

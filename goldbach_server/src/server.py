@@ -5,8 +5,7 @@ import helpers as Helpers
 
 class Server:
   def __init__(self, port):
-    # ip = self.getIP()
-    ip = "26.135.200.238"
+    ip = Helpers.SERVER_IP
 
     self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
@@ -76,7 +75,7 @@ class Server:
   # Return connection type, request
   # Connection types: worker, home, goldbach
   def analyzeMessage(self, rcvd_message, connection):
-    address = connection.getsockname()
+    address = connection.getpeername()
     connection_info = "New connection from: "+ str(address[0]) +" port "+str(address[1])+" ("
     connection_type = ""
     request = ""

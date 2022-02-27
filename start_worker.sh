@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# if does not work
+# require ubuntu 20.04.3 or higher
+# sed -i -e 's/\r$//' scriptname.sh
 
 for program_id in $(seq 1 3); do
    program_name=" "
@@ -25,10 +30,5 @@ mv bin goldbach_server/src/goldbach
 
 cd goldbach_server/src
 
-python3 worker.py &
-workerID=${!}
-
-python3 server.py
-
-wait ${workerID}
+python3 worker.py 
 
