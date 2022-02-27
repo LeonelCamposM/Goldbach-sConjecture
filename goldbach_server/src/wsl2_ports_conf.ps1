@@ -1,5 +1,5 @@
 $WSL_IP = wsl hostname -I
-$WELCOME_PORT = 5000
+$WELCOME_PORT = 8000
 
 clear
 

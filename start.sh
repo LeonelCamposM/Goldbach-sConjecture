@@ -19,6 +19,16 @@ done
 
 echo " "
 echo "Moving libraries to server"
+clear
 rm -rf goldbach_server/src/goldbach/bin
 mv bin goldbach_server/src/goldbach
+
+cd goldbach_server/src
+
+python3 worker.py &
+workerID=${!}
+
+python3 server.py
+
+wait ${workerID}
 

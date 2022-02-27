@@ -5,10 +5,11 @@ import helpers as Helpers
 
 class Server:
   def __init__(self, port):
-    ip = self.getIP()
+    # ip = self.getIP()
+    ip = "26.135.200.238"
 
     self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    # self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     
     self.can_print = threading.Lock()
     self.logAppend("Start listening on "+str(ip)+" port "+str(port))
@@ -67,8 +68,6 @@ class Server:
       request = request.split("&")
       calculator = request[0].replace("calculator=","")
       numbers = request[1].replace("number=","")
-      print("numb:"+ numbers)
-      print("calc:"+ calculator)
       self.goldbach.handleRequest(numbers, calculator, connection)
     else:
       # self.logAppend("Request :"+request+" to "+connection_type+" has been ignored")
