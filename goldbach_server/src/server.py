@@ -8,7 +8,7 @@ class Server:
     ip = self.getIP()
 
     self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     
     self.can_print = threading.Lock()
     self.logAppend("Start listening on "+str(ip)+" port "+str(port))
