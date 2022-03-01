@@ -76,7 +76,7 @@ class Goldbach_Web:
       try: 
         goldbach_number = int(goldbach_number)
         valid_number = goldbach_number > 5 or goldbach_number < -5
-        self.logAppend("Client on "+str(work.client_id.getpeername()[1])+" is working in "+str(goldbach_number))
+        self.logAppend("Client on "+str(connection.getpeername()[1])+" is working in "+str(goldbach_number))
         if valid_number:
           worker_request = str(goldbach_number)+","+work.calculator
           Helpers.sendWebMessage(worker_request, connection)

@@ -5,7 +5,7 @@ import helpers as Helpers
 
 class Server:
   def __init__(self, port):
-    ip = Helpers.SERVER_IP
+    ip = self.getIP()
 
     self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
