@@ -12,8 +12,8 @@ dynamic_array_t* read_input() {
 
 int verify_input(int64_t value) {
   int error = EXIT_SUCCESS;
-  if ((0 <= value && value <= 5) ||
-      (0 >= value && value >= -5)) {
+  bool valid_number = (value > 5 || value < -5);
+  if (!valid_number) {
     error = EXIT_FAILURE;
   }
   return error;

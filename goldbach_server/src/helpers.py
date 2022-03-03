@@ -1,5 +1,5 @@
 # Server info
-SERVER_IP = '34.136.116.48'
+SERVER_IP = '192.168.1.115'
 WELCOME_PORT = 3389
 PACKAGE_SIZE = 1024
 
@@ -46,7 +46,7 @@ def recvWorkerMessage(connection):
 # Add 200 OK status and load html page 
 # Return html loaded in a string
 def loadHTML(name):
-    header = "HTTP/1.1 200 OK\n    <label for=\"number\">Number</label>\n"
+    header = "HTTP/1.1 200 OK\n"
     header += "Content-Type: text/html\n\n"
     html = header
 

@@ -1,17 +1,13 @@
-#include "dynamic_array.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "dynamic_array.h"
 
-#ifndef MAX
-#define MAX 100
-#endif
 #define STARTVALUE 2
 
 /**
@@ -65,13 +61,24 @@ void show_goldbach_results(dynamic_array_t* array, int sums, int64_t number, boo
 bool analize_arguments(int64_t value);
 
 /**
+*@brief append a message or a number in Output.txt file
+*@param mesage message to be writen
+*@param number number to be writen
+*@param number_flag true append the number, false append the message
+*/
+int write_output(char* mesage, size_t number, bool number_flag);
+
+/**
 *@brief get goldbach sums of a value
 *@param value number 
 */
-void controller_run(int64_t value);
+void calculate_number(int64_t value);
 
-int write_output(char* mesage, size_t number, bool number_flag);
-
+/**
+*@brief get goldbach sums of a array
+*@param input_numbers number 
+*/
+void calculate_array(dynamic_array_t* input_numbers);
 
 void report_and_exit(bool error_condition, char* report_name) {
   if (error_condition == true) {
@@ -97,13 +104,11 @@ bool is_prime(int64_t n) {
 }
 
 dynamic_array_t* strong_conjecture(int64_t number) {
-  // Create addings array
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
   array_init(addings);
-  report_and_exit (addings == NULL, "addings array\n");
+  report_and_exit (addings == NULL, "strong_conjecture\n");
   
-  // Fill addings array
   for (int64_t first_adding = STARTVALUE; first_adding <=  number; first_adding++) {
     if (is_prime(first_adding)) {
       int64_t second_adding = number - first_adding;
@@ -118,13 +123,11 @@ dynamic_array_t* strong_conjecture(int64_t number) {
 }
 
 dynamic_array_t* weak_conjecture(int64_t number) {
-  // Create addings array
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
   array_init(addings);
-  report_and_exit (addings == NULL, "addings array\n");
+  report_and_exit (addings == NULL, "weak_conjecture\n");
 
-  // Fill addings array
   for (int64_t first_adding = STARTVALUE; first_adding <=  number; first_adding++) {
     if (is_prime(first_adding)) {
       for (int64_t second_adding = first_adding; second_adding <=  number; second_adding++) {
@@ -181,8 +184,7 @@ void show_goldbach_results(dynamic_array_t* array, int sums, int64_t num, bool l
     write_output(" sums", 0, false);
     write_output(": ", 0, false);
     show_addings(array->elements, num_addings, sums);
-  } 
-  else {
+  } else {
     write_output("",num, true);
     write_output(": ", 0, false);
     write_output("", sums, true);
@@ -191,72 +193,68 @@ void show_goldbach_results(dynamic_array_t* array, int sums, int64_t num, bool l
 }
 
 bool analize_arguments(int64_t value) {
-  bool valid = false;
-  bool invalid_input = (0 <= value && value <= 5) || (0 >= value && value >= -5);
-  if (invalid_input) {
-    printf("%" PRIi64 ": NA\n", value);
-  }else{
-    valid = true;
-  } 
-  return valid;
-}
-
-void controller_run(int64_t value) {
-  // list : true = list the sum, false = don't list the sums
-  bool list = false;
-  if (value < 0) {
-    list = true;
-    value *= -1;
+  bool valid_number = (value > 5 || value < -5);
+  if (!valid_number) {
+    write_output("", value, true);
+    write_output(": NA\n", 0, false);
   }
-
-  dynamic_array_t* addings = (dynamic_array_t*)
-      calloc(1, sizeof(dynamic_array_t));
-  array_init(addings);
-
-  int num_addings = 0;
-  // Verify parity of the number
-  if (value % 2 == 0) {
-    num_addings = 2;
-    addings = strong_conjecture(value);
-  } else {
-    num_addings = 3;
-    addings = weak_conjecture(value);
-  }
-  int sums = count(addings, num_addings);
-  show_goldbach_results(addings, sums, value, list, num_addings);
-  write_output("\n",0, false);
-  array_destroy(addings);
-}
-
-void run() {
-  int64_t value = 0;
-  while (fscanf(stdin, "%" SCNd64, &value) == 1) {
-    bool valid_input = analize_arguments(value);
-    if (valid_input) {
-      controller_run(value);
-    }
-  }
+  return valid_number;
 }
 
 int write_output(char* mesage, size_t number, bool number_flag) {
   FILE *file = fopen("Output.txt", "a+");
-  if (file == NULL) {
-      printf("cannot open output");
-      return 1;
+  report_and_exit (file == NULL, "output\n");
+  if(number_flag == false){
+    fprintf(file, "%s", mesage);
   }else{
-    if(number_flag == false){
-      fprintf(file, "%s", mesage);
-    }else{
-      char str_number[100];
-      sprintf(str_number, "%li", number);
-      fprintf(file, "%s", str_number);
-    }
+    char str_number[100];
+    sprintf(str_number, "%li", number);
+    fprintf(file, "%s", str_number);
   }
   fclose(file);
-  return 0;
+  return EXIT_SUCCESS;
+}
+
+void calculate_number(int64_t value) {
+  bool valid_input = analize_arguments(value);
+  if (valid_input) {
+    bool list = false;
+    if (value < 0) {
+      list = true;
+      value *= -1;
+    }
+
+    dynamic_array_t* results = (dynamic_array_t*)
+        calloc(1, sizeof(dynamic_array_t));
+    report_and_exit (results == NULL, "calculate_number\n");
+    array_init(results);
+
+    int num_addings = 0;
+    if (value % 2 == 0) {
+      num_addings = 2;
+      results = strong_conjecture(value);
+    } else {
+      num_addings = 3;
+      results = weak_conjecture(value);
+    }
+
+    int sums = count(results, num_addings);
+    show_goldbach_results(results, sums, value, list, num_addings);
+    write_output("\n",0, false);
+    array_destroy(results);
+  }
+}
+
+void calculate_array(dynamic_array_t* input_numbers) {
+  for (size_t number = 0; number < input_numbers->count; number++) {
+    int64_t goldbach_number = input_numbers->elements[number];
+    bool valid_input = analize_arguments(goldbach_number);
+    if (valid_input) {
+      calculate_number(goldbach_number);
+    }
+  }
 }
 
 int main() {
-  run();
   return EXIT_SUCCESS;
 }

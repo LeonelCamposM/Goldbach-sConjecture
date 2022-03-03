@@ -8,6 +8,13 @@
 
 #include "dynamic_array.h"
 
+dynamic_array_t* array_create(){
+  dynamic_array_t* array = (dynamic_array_t*)
+      calloc(1, sizeof(dynamic_array_t));
+  array_init(array);
+  return array;
+}
+
 int array_init(dynamic_array_t* array) {
   assert(array);
   array->capacity = 0;
@@ -23,11 +30,6 @@ void array_destroy(dynamic_array_t* array) {
     free(array->elements);
 }
 
-/**
- * @brief Increases the capacity of the dynamic array
- * @param array A pointer to the array
- * @return An integer, indicating if there was an error
- */
 int array_increase_capacity(dynamic_array_t* array) {
   size_t new_capacity = 10 *(array->capacity ? array->capacity : 1);
   int64_t* new_elements = (int64_t*)

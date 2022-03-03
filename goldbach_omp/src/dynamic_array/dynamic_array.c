@@ -8,6 +8,13 @@
 
 #include "dynamic_array.h"
 
+dynamic_array_t* array_create(){
+  dynamic_array_t* array = (dynamic_array_t*)
+      calloc(1, sizeof(dynamic_array_t));
+  array_init(array);
+  return array;
+}
+
 int array_init(dynamic_array_t* array) {
   assert(array);
   array->capacity = 0;

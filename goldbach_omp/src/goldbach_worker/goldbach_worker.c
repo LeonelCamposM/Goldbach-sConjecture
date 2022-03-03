@@ -59,7 +59,7 @@ dynamic_array_t* strong_conjecture(int64_t number, int64_t start, int64_t finish
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
   array_init(addings);
-  report_and_exit (addings == NULL, "addings array\n");
+  report_and_exit (addings == NULL, "strong_conjecture");
   
   // Fill addings array
   for (int64_t first_adding = start; first_adding <  finish; first_adding++) {
@@ -79,7 +79,7 @@ dynamic_array_t* weak_conjecture(int64_t number, int64_t start, int64_t finish) 
   dynamic_array_t* addings = (dynamic_array_t*)
       calloc(1, sizeof(dynamic_array_t));
   array_init(addings);
-  report_and_exit (addings == NULL, "addings array\n");
+  report_and_exit (addings == NULL, "weak_conjecture");
 
   for (int64_t first_adding = start; first_adding <  finish; first_adding++) {
     if (is_prime(first_adding)) {

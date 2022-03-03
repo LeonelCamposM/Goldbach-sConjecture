@@ -12,9 +12,9 @@ void consumer_start(queue_t* queue, int64_t** ress){
   while (true) {
     int error = queue_dequeue(queue, new_work);
     if(error == 0) {
-      int64_t* res;
-      res = goldbach_worker_run(new_work->goldbach_number, new_work->start, new_work->finish);
-      ress[new_work->results_id] = res;
+        int64_t* res;
+        res = goldbach_worker_run(new_work->goldbach_number, new_work->start, new_work->finish);
+        ress[new_work->results_id] = res;
     } else {
       break;
     }

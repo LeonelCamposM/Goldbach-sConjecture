@@ -10,8 +10,14 @@
 #include "dynamic_array.h"
 #include "prod_cons_omp.h"
 
-int controller_run(int64_t goldbach_num);
-
+/**
+*@brief print GolbachModel results
+*@param num_addings  number of addings 
+*@param value user input (goldbach number)
+*@param list  number of addings 
+*@param data  ptr to shared data 
+*@return error code
+*/
 void print_results(dynamic_array_t* input, int64_t** results,
   size_t thread_count);
 
@@ -41,29 +47,17 @@ void show_array_addings(int64_t* array, int64_t sums,
 */
 void free_results(int64_t** results, int64_t thread_count);
 
-int controller_run(int64_t  goldbach_num) {
-  int error = EXIT_SUCCESS;
+/**
+*@brief get goldbach sums of a array
+*@param input_numbers number 
+*/
+void calculate_array(dynamic_array_t* input_numbers);
 
-  prod_cons_data_t* data = (prod_cons_data_t*)
-    calloc(1, sizeof(prod_cons_data_t));
-  report_and_exit(data == NULL, "Could not create producer consumer data");
-
-  data->input_numbers = read_input();
-  array_append(data->input_numbers, goldbach_num);
-
-  data->threads = sysconf(_SC_NPROCESSORS_ONLN);
-
-  //int64_t** results
-  data->results = (int64_t**)
-    calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
-  report_and_exit(data->results == NULL, "could not create results array");
-
-  data->results = prod_cons_omp_start(data, data->results);
-  print_results(data->input_numbers, data->results, data->threads);
-  free_results(data->results, data->threads);
-  free(data);
-  return error;
-}
+/**
+*@brief get goldbach sums of a value
+*@param value number 
+*/
+void calculate_number(int64_t value);
 
 void print_results(dynamic_array_t* input, int64_t** results,
   size_t thread_count) {
@@ -134,10 +128,12 @@ void print_results(dynamic_array_t* input, int64_t** results,
         }
       }
       write_output("\n",0, false);
+    } else{
+      write_output("", value, true);
+      write_output(": NA\n", 0, false);
     }
   }
 }
-
 
 int64_t count_array_sums(int64_t* array, int num_addings) {
   int64_t sums = 0;
@@ -182,6 +178,42 @@ void free_results(int64_t** results, int64_t thread_count) {
   free(results);
 }
 
+void calculate_array(dynamic_array_t* input_numbers) {
+  prod_cons_data_t* data = (prod_cons_data_t*)
+    calloc(1, sizeof(prod_cons_data_t));
+  report_and_exit(data == NULL, "Could not create producer consumer data");
+  data->input_numbers = input_numbers;
+  data->threads = sysconf(_SC_NPROCESSORS_ONLN);
+
+  data->results = (int64_t**)
+    calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
+  report_and_exit(data->results == NULL, "could not create results array");
+
+  data->results = prod_cons_omp_start(data, data->results);
+  print_results(data->input_numbers, data->results, data->threads);
+  free_results(data->results, data->threads);
+  free(data);
+}
+
+void calculate_number(int64_t value) {
+  prod_cons_data_t* data = (prod_cons_data_t*)
+    calloc(1, sizeof(prod_cons_data_t));
+  report_and_exit(data == NULL, "Could not create producer consumer data");
+
+  data->input_numbers = read_input();
+  array_append(data->input_numbers, value);
+  data->threads = sysconf(_SC_NPROCESSORS_ONLN);
+
+  data->results = (int64_t**)
+    calloc(data->threads*data->input_numbers->count, sizeof(int64_t*));
+  report_and_exit(data->results == NULL, "could not create results array");
+
+  data->results = prod_cons_omp_start(data, data->results);
+  print_results(data->input_numbers, data->results, data->threads);
+  free_results(data->results, data->threads);
+  free(data);
+}
+
 int main(){
-  return 0;
+  return EXIT_SUCCESS;
 }

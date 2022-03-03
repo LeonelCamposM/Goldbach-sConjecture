@@ -11,13 +11,15 @@ class Result_Package():
     self.worker_response = worker_response
 
 class Work_Package():
-  def __init__(self, input_id, number, client_id, request_size, start, calculator):
+  def __init__(self, input_id, number, client_id, request_size, start, calculator, unified_workload):
     self.input_id = input_id
     self.number = number
     self.client_id = client_id
     self.request_size = request_size
     self.start = start
     self.calculator = calculator
+    self.unified_workload = unified_workload
+    self.final_time = -1
 
 # Thread safe queue, sleep thread when queue is empty
 # Alternate betwen send and rcv 
@@ -73,35 +75,43 @@ class Goldbach_Web:
     while True:
       work = self.work_queue.dequeue()
       goldbach_number = work.number
-      try: 
-        goldbach_number = int(goldbach_number)
-        valid_number = goldbach_number > 5 or goldbach_number < -5
-        self.logAppend("Client on "+str(connection.getpeername()[1])+" is working in "+str(goldbach_number))
-        if valid_number:
-          worker_request = str(goldbach_number)+","+work.calculator
-          Helpers.sendWebMessage(worker_request, connection)
-          worker_response = Helpers.recvWorkerMessage(connection)
-          result_package = Result_Package(work, worker_response)
-          self.result_queue.enqueue(result_package)
-        else:
-          result_package = Result_Package(work, str(goldbach_number)+": N/A")
-          self.result_queue.enqueue(result_package)
-      except ValueError:
-        result_package = Result_Package(work, str(goldbach_number)+": N/A")
-        self.result_queue.enqueue(result_package)
+      self.logAppend("Client on "+str(connection.getpeername()[1])+" is working in "+str(goldbach_number))
+      worker_request = str(goldbach_number)+","+work.calculator+","+str(work.unified_workload)
+      Helpers.sendWebMessage(worker_request, connection)
+      worker_response = Helpers.recvWorkerMessage(connection)
+      if work.unified_workload == "True":
+        worker_response = worker_response.split("&")
+        work.final_time = float(worker_response[0])
+        worker_response = worker_response[1]
+      result_package = Result_Package(work, worker_response)
+      self.result_queue.enqueue(result_package)
   
   # [Thread]
   # Produces a work packages from a request 
   # and queues them in in self.work_queue
-  def handleRequest(self, request, calculator, connection):
+  def handleRequest(self, request, calculator, connection, unified_workload):
+    if unified_workload == False:
+      self.handleDistributedWork(request, connection, calculator)
+    else:
+      self.handleUnifiedWork(request, connection, calculator)
+
+  def handleDistributedWork(self, request, connection, calculator):
     input_numbers = request.split("%2C") 
     for input_id in range(0,len(input_numbers)):
       request_size = len(input_numbers)
       number = input_numbers[input_id]
       client_id = connection
       start = time()
-      work_package = Work_Package(input_id, number,client_id, request_size, start, calculator)
+      work_package = Work_Package(input_id, number,client_id, request_size, start, calculator, "False")
       self.work_queue.enqueue(work_package)
+
+  def handleUnifiedWork(self, request, connection, calculator):
+    request_size = 1
+    number = request
+    client_id = connection
+    start = -1
+    work_package = Work_Package(1, number,client_id, request_size, start, calculator, "True")
+    self.work_queue.enqueue(work_package)
 
   # [Thread]
   # Create and send html response 
@@ -123,17 +133,15 @@ class Goldbach_Web:
     while True:
       result_package = self.result_queue.dequeue()
       work_package = result_package.work_package
-      if result_package.worker_response == "stop":
-        break
-      else:
-        client_queue = self.dispatch_queues.setdefault(work_package.client_id, [])
-        client_queue.append((result_package.worker_response, work_package.input_id))
-        if len(client_queue) == work_package.request_size:
-          finish = time()
-          final_time = finish - work_package.start
-          goldbach_result = (work_package.client_id, client_queue, final_time)
-          self.response_queue.enqueue(goldbach_result)
-          self.dispatch_queues.pop(work_package.client_id)
+      client_queue = self.dispatch_queues.setdefault(work_package.client_id, [])
+      client_queue.append((result_package.worker_response, work_package.input_id))
+      if len(client_queue) == work_package.request_size:
+        finish = time()
+        if work_package.final_time == -1:
+          work_package.final_time = finish - work_package.start
+        goldbach_result = (work_package.client_id, client_queue, work_package.final_time)
+        self.response_queue.enqueue(goldbach_result)
+        self.dispatch_queues.pop(work_package.client_id)
 
 
 

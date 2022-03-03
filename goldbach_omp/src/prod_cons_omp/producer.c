@@ -69,6 +69,7 @@ int64_t calc_finish(int64_t value, int64_t thread_count, int64_t thread_id) {
 void producer_start(dynamic_array_t* input_numbers, queue_t* queue, size_t consumer_count, int64_t** resultsa) {
   for (size_t index = 0; index < input_numbers->count; index++) {
     int64_t value = input_numbers->elements[index];
+    
     value = value > 0 ? value :  value * -1;
 
     for (size_t thread_id = 0; thread_id < consumer_count; thread_id++) {

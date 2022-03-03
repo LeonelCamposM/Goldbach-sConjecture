@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "common.h"
 #include "goldbach_worker.h"
+#include "dynamic_array.h"
 
 typedef struct shared_data {
   int64_t thread_count;
@@ -19,8 +20,6 @@ typedef struct private_data {
   shared_data_t* shared_data;
 } private_data_t;
 
-int controller_run(int64_t value);
-
 /**
 *@brief generic rutine for init memory, create threads do work and join threads
 *@param shared_data ptr to shared data of threads 
@@ -29,7 +28,7 @@ int controller_run(int64_t value);
 int create_threads(shared_data_t* shared_data);
 
 /**
-*@brief rutine for instructtions of threads 
+*@brief main rutine for instructions of threads 
 *@param data ptr to private data of threads 
 */
 void* run(void* data);
@@ -83,7 +82,6 @@ void print_results(int64_t num_addings, int64_t value, bool list, void* data);
 */
 int64_t count_array_sums(int64_t* array, int num_addings);
 
-
 /**
 *@brief show all addings stored in array
 *@param array to print
@@ -100,67 +98,41 @@ void show_array_addings(int64_t* array, int64_t sums,
 */
 void free_results(int64_t** results, int64_t thread_count);
 
+/**
+*@brief validate user input
+*@param value input
+*/
+bool analize_arguments(int64_t value);
+
+/**
+*@brief append a message or a number in Output.txt file
+*@param mesage message to be writen
+*@param number number to be writen
+*@param number_flag true append the number, false append the message
+*/
 int write_output(char* mesage, size_t number, bool number_flag);
 
-int main() {
-  int error = EXIT_SUCCESS;
-  return error;
-}
+/**
+*@brief get goldbach sums of a value
+*@param value number 
+*/
+void calculate_number(int64_t value);
 
-// int start(int argc, char* argv[]){
-//   int error = EXIT_SUCCESS;
-//   int64_t value = 0;
-//   while (fscanf(stdin, "%" SCNd64, &value) == 1) {
-//     error = verify_input(value);
-//     if (error == EXIT_SUCCESS) {
-//       int threads = analyze_arguments(argc, argv);
-//       controller_run(value, threads);
-//     }
-//   }
-// return error;
-// }
+/**
+*@brief get goldbach sums of a array
+*@param input_numbers number 
+*/
+void calculate_array(dynamic_array_t* input_numbers);
 
-void init_shared_data(shared_data_t* shared_data, int threads, int64_t value) {
+void init_shared_data(shared_data_t* shared_data, int64_t value) {
   //  Select thread number
-  if (threads != 0) {
-    shared_data->thread_count = threads;
-  } else {
-    shared_data->thread_count = sysconf(_SC_NPROCESSORS_ONLN);
-  }
+  shared_data->thread_count = sysconf(_SC_NPROCESSORS_ONLN);
 
   // init golbach shrd data
   shared_data->num = value;
   shared_data->results = (int64_t**)
     calloc(shared_data->thread_count, sizeof(int64_t*));
-  report_and_exit(shared_data->results == NULL, "could not create results array");
-}
-
-int controller_run(int64_t value) {
-  int error = EXIT_SUCCESS;
-  shared_data_t* shared_data = (shared_data_t*)
-    calloc(1, sizeof(shared_data_t));
-  report_and_exit(shared_data == NULL, "Could no create shared data");
-
-  //  list : true = list ,false = dont list
-  bool list = false;
-  if (value < 0) {
-    list = true;
-    value *= -1;
-  }
-
-  int threads = sysconf(_SC_NPROCESSORS_ONLN);
-
-  init_shared_data(shared_data, threads, value);
-
-  //  concurrent work
-  error = create_threads(shared_data);
-
-  // 1 thread print
-  int num_addings = (value % 2 == 0)? 2 : 3;
-  print_results(num_addings, value, list, shared_data);
-  free_results(shared_data->results, shared_data->thread_count);
-  free(shared_data);
-  return error;
+  report_and_exit(shared_data->results == NULL, "init_shared_data");
 }
 
 int create_threads(shared_data_t* shared_data) {
@@ -208,7 +180,7 @@ return error;
 
 void* run(void* data) {
   private_data_t* private_data = (private_data_t*)data;
-  report_and_exit(private_data == NULL, "could not create GoldbachWorker Private Data");
+  report_and_exit(private_data == NULL, "run");
 
   //  initialize data
   int64_t number = private_data->shared_data->num;
@@ -216,9 +188,7 @@ void* run(void* data) {
   int64_t threadCount = private_data->shared_data->thread_count;
   int64_t start = calc_start(number, threadCount, id);
   int64_t finish = calc_finish(number, threadCount, id);
-  
-  // Now str contains the integer as characters
-  //  save worker array in results
+
   private_data->shared_data->results[id] =
     goldbach_worker_run(number, start, finish);
   return NULL;
@@ -232,7 +202,7 @@ int64_t calc_start(int64_t value, int64_t thread_count, int64_t thread_id) {
     // Assigns which worker has overload
     int64_t overload = min_num(thread_id, (value-STARTVALUE) % thread_count);
     result = work+overload;
-  }else{
+  }else {
     // Equitable distribution of work for each worker
     int64_t work = thread_id * ( value / thread_count);
     // Assigns which worker has overload
@@ -258,7 +228,7 @@ int64_t min_num(int64_t num1, int64_t num2) {
 
 void print_results(int64_t num_addings, int64_t value, bool list, void* data) {
   shared_data_t* shared_data = (shared_data_t*)data;
-  report_and_exit(shared_data == NULL, "could not create GoldbachWorker Private Data");
+  report_and_exit(shared_data == NULL, "print_results");
 
   bool first = true;
   int64_t sums = 0;
@@ -269,7 +239,6 @@ void print_results(int64_t num_addings, int64_t value, bool list, void* data) {
   for (int64_t index = 0; index < shared_data->thread_count; index++) {
     int64_t thread_sums =
       count_array_sums(shared_data->results[index], num_addings);
-
     if (list == true) {
       if (index == 0) {
         write_output("-", 0, false);
@@ -332,20 +301,16 @@ void show_array_addings(int64_t* array, int64_t sums,
 
 int write_output(char* mesage, size_t number, bool number_flag) {
   FILE *file = fopen("Output.txt", "a+");
-  if (file == NULL) {
-      printf("cannot open output");
-      return 1;
+  report_and_exit (file == NULL, "output\n");
+  if(number_flag == false){
+    fprintf(file, "%s", mesage);
   }else{
-    if(number_flag == false){
-      fprintf(file, "%s", mesage);
-    }else{
-      char str_number[100];
-      sprintf(str_number, "%li", number);
-      fprintf(file, "%s", str_number);
-    }
+    char str_number[100];
+    sprintf(str_number, "%li", number);
+    fprintf(file, "%s", str_number);
   }
   fclose(file);
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 void free_results(int64_t** results, int64_t thread_count) {
@@ -353,4 +318,53 @@ void free_results(int64_t** results, int64_t thread_count) {
     free(results[index]);
   }
   free(results);
+}
+
+bool analize_arguments(int64_t value) {
+  bool valid_number = (value > 5 || value < -5);
+  if (!valid_number) {
+    write_output("", value, true);
+    write_output(": NA\n", 0, false);
+  }
+  return valid_number;
+}
+
+void calculate_number(int64_t value) {
+  bool valid_input = analize_arguments(value);
+  if (valid_input) {
+    shared_data_t* shared_data = (shared_data_t*)
+    calloc(1, sizeof(shared_data_t));
+    report_and_exit(shared_data == NULL, "calculate_number");
+
+    bool list = false;
+    if (value < 0) {
+      list = true;
+      value *= -1;
+    }
+
+    init_shared_data(shared_data, value);
+
+    //  concurrent work
+    create_threads(shared_data);
+
+    // 1 thread print
+    int num_addings = (value % 2 == 0)? 2 : 3;
+    print_results(num_addings, value, list, shared_data);
+    free_results(shared_data->results, shared_data->thread_count);
+    free(shared_data);
+  }
+}
+
+void calculate_array(dynamic_array_t* input_numbers) {
+  for (size_t number = 0; number < input_numbers->count; number++) {
+    int64_t goldbach_number = input_numbers->elements[number];
+    bool valid_input = analize_arguments(goldbach_number);
+    if (valid_input) {
+      calculate_number(goldbach_number);
+    }
+  }
+}
+
+int main() {
+  return EXIT_SUCCESS;
 }
