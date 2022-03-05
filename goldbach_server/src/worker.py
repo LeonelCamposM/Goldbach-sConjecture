@@ -31,10 +31,12 @@ class Worker():
       else:
         time_elapsed = self.writeGoldbachResults(work)
         response = self.readGoldbachResult()
-        self.logAppend(response)
         worker_response = ""
         if time_elapsed != -1:
+          self.logAppend("\n"+response)
           worker_response += str(time_elapsed)+"&"
+        else:
+          self.logAppend(response)
         Helpers.sendWorkerMessage(self.server_socket, worker_response+response)
 
   def stop(self):

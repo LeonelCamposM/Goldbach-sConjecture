@@ -54,14 +54,27 @@ class Goldbach_Web:
       daemon = True).start()
 
   def serveGoldbachresults(self,connection, results, time):
+    ordered_results = self.sortResults(results)
     results_str = ""
+    for result in ordered_results:
+      result_array = result.split("\n")
+      result_array.remove("")
+      for line in result_array:
+        results_str += line+"<br>"+"<br>"
+    results_page = Helpers.loadHTML("results")
+    results_page = results_page.replace("(time)", str(round(time,5)))
+    results_page = results_page.replace("(result)", results_str)
+    Helpers.sendWebMessage(results_page, connection)
+  
+  def sortResults(self, results):
+    ordered_results = []
+    for index in range(len(results)):
+      ordered_results.append("")
     for result in results:
-      results_str += str(result[0])+"<br>"+"<br>"
-    html = Helpers.loadHTML("results")
-    html = html.replace("(time)", str(round(time,5)))
-    html = html.replace("(result)", results_str)
-    html = html.encode("utf_8")
-    connection.sendall(html)
+      index = result[1]
+      value = result[0]
+      ordered_results[index] = value
+    return ordered_results
 
   # Thread safe print
   def logAppend(self, message):
@@ -110,7 +123,7 @@ class Goldbach_Web:
     number = request
     client_id = connection
     start = -1
-    work_package = Work_Package(1, number,client_id, request_size, start, calculator, "True")
+    work_package = Work_Package(0, number,client_id, request_size, start, calculator, "True")
     self.work_queue.enqueue(work_package)
 
   # [Thread]
