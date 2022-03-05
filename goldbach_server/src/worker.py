@@ -3,16 +3,18 @@ import os
 from ctypes import CDLL
 from time import time
 import helpers as Helpers
-
-goldbach_pthread = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
-goldbach_omp = CDLL("./goldbach/bin/lib_goldbach_omp.so")
-goldbach_serial = CDLL("./goldbach/bin/lib_goldbach_serial.so")
+import subprocess
+import shutil
 
 class Worker():
   def __init__(self):
     self.server_address = (Helpers.SERVER_IP, Helpers.WELCOME_PORT)
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logAppend('Connecting on %s port %s \n' % self.server_address)
+
+    self.goldbach_pthread = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
+    self.goldbach_omp = CDLL("./goldbach/bin/lib_goldbach_omp.so")
+    self.goldbach_serial = CDLL("./goldbach/bin/lib_goldbach_serial.so")
 
   def logAppend(self, message):
     print("[Worker] "+message)
@@ -66,11 +68,11 @@ class Worker():
 
   # @param calculator_name name of calculator to be used
   def getCalculator(self, calculator_name):
-    calculator = goldbach_omp
+    calculator = self.goldbach_omp
     if calculator_name == "serial":
-      calculator =  goldbach_serial
+      calculator =  self.goldbach_serial
     elif calculator_name == "pthread":
-      calculator =  goldbach_pthread
+      calculator =  self.goldbach_pthread
     return calculator
 
   # @brief Get results from a single worker with no communication latency
@@ -89,6 +91,28 @@ class Worker():
     time_elapsed = str(round(time_elapsed,5))
     return time_elapsed
 
+def shell(command):
+  subprocess.check_output(command, shell=True)
+
+def makeGoldbachCalculators():
+  os.chdir("..")
+  os.chdir("..")
+  shell('ls')
+
+  program_names = ["goldbach_serial", "goldbach_pthread", "goldbach_omp"]
+  for program in program_names:
+    print("Making "+program+"\n")
+    command = "make APPNAME="+program
+    shell(command)
+  print("Moving libraries to server"+"\n")
+  try:
+    shutil.rmtree("goldbach_server/src/goldbach/bin")
+  except OSError as e:
+    pass
+  shell("mv bin goldbach_server/src/goldbach")
+  os.chdir("goldbach_server/src")
+
 if __name__ == "__main__":
+  makeGoldbachCalculators()
   client = Worker()
   client.start()

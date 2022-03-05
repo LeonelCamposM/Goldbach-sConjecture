@@ -1,5 +1,6 @@
 import socket
 import threading
+from time import sleep
 import goldbach.goldbach_web as Goldbach_Web
 import helpers as Helpers
 
@@ -37,14 +38,11 @@ class Server:
     self.can_print.release()
 
   def listenClient(self):
-    try:
-      while True:
-        connection, client_address = self.welcome_socket.accept()
-        # Handle client on new thread with connection socket
-        threading.Thread(target = self.handleConnection, args=(connection,),
-          daemon = True).start()
-    except KeyboardInterrupt:
-      self.stop()
+    while True:
+      connection, client_address = self.welcome_socket.accept()
+      # Handle client on new thread with connection socket
+      threading.Thread(target = self.handleConnection, args=(connection,),
+        daemon = True).start()
 
   def handleConnection(self, connection):
     rcvd_message = Helpers.recvWebMessage(connection)
@@ -120,7 +118,19 @@ class Server:
     home_page = Helpers.loadHTML("home")
     Helpers.sendWebMessage(home_page, connection)
     connection.close()
+  
+def serverKiller(server):
+  try:
+    while True: sleep(99999)
+  except KeyboardInterrupt:
+    server.stop()
 
 if __name__ == "__main__":
   server = Server(Helpers.WELCOME_PORT)
-  server.listenClient()
+
+  # daemon thread handle conections
+  threading.Thread(target = server.listenClient, args=(),
+    daemon = True).start()
+  
+  #main thread wait ctrl + c signal
+  serverKiller(server)
