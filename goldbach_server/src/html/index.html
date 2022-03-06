@@ -1,0 +1,33 @@
+<html lang="en">
+    <head>
+        <meta charset="ascii"/>
+        <title> Cpu usage</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shorthandcss@1.1.1/dist/shorthand.min.css" />
+
+        
+        <style>
+            body {
+                background-color:#000000;
+                font-family: monospace;
+            }
+
+            h1 {
+                color: white;
+                font-size:400%
+            }
+
+            h2 {
+                color: white;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <h1> Cpu usage</h1><br>
+        <script src="https://cdn.socket.io/4.4.1/socket.io.min.js" integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H" crossorigin="anonymous"></script>
+        <script src="/index.js"></script>
+        <h2 id = "cpu_values"> (graph) </h2>
+        <br>
+    </body>
+</html>
