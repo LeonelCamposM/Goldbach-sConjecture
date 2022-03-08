@@ -1,7 +1,12 @@
+import socket
+
 # Server info
 SERVER_IP = '192.168.1.115'
 WELCOME_PORT = 3389
 PACKAGE_SIZE = 1024
+
+# Json Server info
+REQUEST_PORT = 8000
 
 # len(message) < PACKAGE_SIZE
 # Send data to web client or worker
@@ -55,3 +60,16 @@ def loadHTML(name):
       html += line
     
     return html
+
+# @brief Gets ip of machine where script is running
+def getIP():
+    ip = 'NULL'
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:       
+      sock.connect(('8.8.8.8', 1))
+      ip = sock.getsockname()[0]
+    except Exception:
+      pass
+    sock.close()
+    assert ip != 'NULL', "Could not get machine ip\n"
+    return ip

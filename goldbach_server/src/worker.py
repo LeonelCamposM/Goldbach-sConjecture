@@ -1,17 +1,19 @@
 import socket
 import os
 from ctypes import CDLL
-from time import time
+import threading
+from time import sleep, time
 import helpers as Helpers
 import subprocess
 import shutil
+import psutil
+import json
 
 class Worker():
   def __init__(self):
     self.server_address = (Helpers.SERVER_IP, Helpers.WELCOME_PORT)
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logAppend('Connecting on %s port %s \n' % self.server_address)
-
     self.goldbach_pthread = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
     self.goldbach_omp = CDLL("./goldbach/bin/lib_goldbach_omp.so")
     self.goldbach_serial = CDLL("./goldbach/bin/lib_goldbach_serial.so")
@@ -93,6 +95,28 @@ class Worker():
     time_elapsed = str(round(time_elapsed,5))
     return time_elapsed
 
+def cpuStatusUpdater():
+  while True:
+    json_server_addr = (Helpers.SERVER_IP, Helpers.REQUEST_PORT)
+    json_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    json_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    json_socket.connect(json_server_addr)
+    percents = psutil.cpu_percent(percpu=True, interval=1)
+    use_percpu = []
+    ip = Helpers.getIP()
+    for value in percents:
+        use_percpu.append(str(int(value)))    
+    print("CPU Usage = " + str(use_percpu))
+    print("\n\n") 
+    status = dict()
+    status[ip] = use_percpu
+    cpu_status = json.dumps(status)
+    msg = "update_cpu "
+    msg += cpu_status
+    print(msg)
+    Helpers.sendWebMessage(msg, json_socket)
+    sleep(1)
+    
 def shell(command):
   subprocess.check_output(command, shell=True)
 
@@ -115,6 +139,11 @@ def makeGoldbachCalculators():
   os.chdir("goldbach_server/src")
 
 if __name__ == "__main__":
+  threading.Thread(target = cpuStatusUpdater, args=(),
+        daemon = True).start()
+  print("updating")
+
   makeGoldbachCalculators()
   client = Worker()
+  print("creado")
   client.start()

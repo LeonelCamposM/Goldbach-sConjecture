@@ -2,11 +2,12 @@ import socket
 import threading
 from time import sleep
 import goldbach.goldbach_web as Goldbach_Web
+import cpu_usage.json_server as Json_Server
 import helpers as Helpers
 
 class Server:
   def __init__(self, port):
-    ip = self.getIP()
+    ip = Helpers.getIP()
     self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #self.welcome_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     self.can_print = threading.Lock()
@@ -17,19 +18,6 @@ class Server:
 
     # Web apps
     self.goldbach = Goldbach_Web.Goldbach_Web()
-  
-  # @brief Gets ip of machine where server is running
-  def getIP(self):
-    ip = 'NULL'
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:       
-      sock.connect(('8.8.8.8', 1))
-      ip = sock.getsockname()[0]
-    except Exception:
-      pass
-    sock.close()
-    assert ip != 'NULL', "[SERVER] Could not get machine ip\n"
-    return ip
 
   # Thread safe print
   def logAppend(self, message):
@@ -127,6 +115,11 @@ def serverKiller(server):
 
 if __name__ == "__main__":
   server = Server(Helpers.WELCOME_PORT)
+
+  threading.Thread(target = Json_Server.start(), args=(),
+    daemon = True).start()
+  
+  print("done")
 
   # daemon thread handle conections
   threading.Thread(target = server.listenClient, args=(),

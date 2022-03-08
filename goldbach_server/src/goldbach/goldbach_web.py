@@ -22,7 +22,6 @@ class Work_Package():
     self.final_time = -1
 
 # Thread safe queue, sleep thread when queue is empty
-# Alternate betwen send and rcv 
 class Queue():
   def __init__(self):
     self.queue= []
