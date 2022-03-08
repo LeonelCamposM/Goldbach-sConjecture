@@ -55,7 +55,7 @@ def loadHTML(name):
     header += "Content-Type: text/html\n\n"
     html = header
 
-    file = open("html/"+str(name)+".html", "r")
+    file = open("web_resources/html/"+str(name)+".html", "r")
     for line in file:
       html += line
     

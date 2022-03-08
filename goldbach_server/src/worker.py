@@ -8,6 +8,7 @@ import subprocess
 import shutil
 import psutil
 import json
+import requests
 
 class Worker():
   def __init__(self):
@@ -96,25 +97,19 @@ class Worker():
     return time_elapsed
 
 def cpuStatusUpdater():
+  BASE = "http://"+str(Helpers.SERVER_IP)+":5000/"
   while True:
-    json_server_addr = (Helpers.SERVER_IP, Helpers.REQUEST_PORT)
-    json_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    json_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-    json_socket.connect(json_server_addr)
     percents = psutil.cpu_percent(percpu=True, interval=1)
     use_percpu = []
     ip = Helpers.getIP()
     for value in percents:
         use_percpu.append(str(int(value)))    
-    print("CPU Usage = " + str(use_percpu))
-    print("\n\n") 
-    status = dict()
-    status[ip] = use_percpu
-    cpu_status = json.dumps(status)
-    msg = "update_cpu "
-    msg += cpu_status
-    print(msg)
-    Helpers.sendWebMessage(msg, json_socket)
+    args = dict()
+    args['ip'] = ip
+    args['data'] = use_percpu
+    myjson = json.dumps(args)
+    url = BASE + "update_cpu"
+    requests.post(url, json = myjson)
     sleep(1)
     
 def shell(command):
@@ -123,8 +118,6 @@ def shell(command):
 def makeGoldbachCalculators():
   os.chdir("..")
   os.chdir("..")
-  shell('ls')
-
   program_names = ["goldbach_serial", "goldbach_pthread", "goldbach_omp"]
   for program in program_names:
     print("Making "+program+"\n")
@@ -141,9 +134,6 @@ def makeGoldbachCalculators():
 if __name__ == "__main__":
   threading.Thread(target = cpuStatusUpdater, args=(),
         daemon = True).start()
-  print("updating")
-
   makeGoldbachCalculators()
   client = Worker()
-  print("creado")
   client.start()

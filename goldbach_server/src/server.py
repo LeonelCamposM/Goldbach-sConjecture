@@ -2,7 +2,7 @@ import socket
 import threading
 from time import sleep
 import goldbach.goldbach_web as Goldbach_Web
-import cpu_usage.json_server as Json_Server
+import cpu_usage.api as Api
 import helpers as Helpers
 
 class Server:
@@ -115,15 +115,8 @@ def serverKiller(server):
 
 if __name__ == "__main__":
   server = Server(Helpers.WELCOME_PORT)
-
-  threading.Thread(target = Json_Server.start(), args=(),
-    daemon = True).start()
-  
-  print("done")
-
-  # daemon thread handle conections
-  threading.Thread(target = server.listenClient, args=(),
-    daemon = True).start()
+  threading.Thread(target = server.listenClient, args=(),).start()
+  threading.Thread(target = Api.start(), args=(),).start()
   
   #main thread wait ctrl + c signal
   serverKiller(server)
