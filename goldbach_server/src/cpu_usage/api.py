@@ -1,9 +1,11 @@
 import json
 import threading
 from time import sleep
-from urllib import response
 from flask import Flask,Response,request
+from waitress import serve
 import helpers as Helpers
+import logging
+
 
 # Thread safe Dict, only one thread can use it
 class Dict():
@@ -11,34 +13,39 @@ class Dict():
     self.memory= dict()
     self.can_use = threading.Lock()
   
-  def update(self, ip, status):
+  def update(self, ip, status_array):
     self.can_use.acquire()
-    # data = [{'x':0, 'y':ip, 'value':status}, {'x':1, 'y':ip, 'value':status},{'x':2, 'y':ip, 'value':status}]
-    data = [{'x':0, 'y':ip, 'value':status}]
-    
-    self.memory = data
-    print("\n\nupdate "+str(self.memory)+"\n\n")
+    self.memory[ip] = status_array
     self.can_use.release()
   
   def get(self):
     self.can_use.acquire()
     memory = self.memory.copy()
-    print("\nget "+str(self.memory))
+    memory = self.formatDataObject(memory)
     self.can_use.release()
     return memory
+  
+  def formatDataObject(self, memory):
+    cpu_reports = []
+    for key in memory:
+      data = {'ip':key, 'value':memory[key]}
+      cpu_reports.append(data)
+    cpu_reports = json.dumps(cpu_reports)
+    return cpu_reports
 
 storage = Dict()
 app = Flask(__name__)
+log = logging.getLogger('werkzeug')
+log.disabled = True
 
 # Send current storage status to client
-@app.route('/cpu_status', methods=['GET'])
-def handle_get_cpu():
+@app.get('/cpu_status')
+def handle_cpu_status():
     memory = storage.get()
-    cpu_status = json.dumps(memory)
-    respuesta = Response(cpu_status)
-    respuesta.headers["Access-Control-Allow-Origin"] = "*"
-    sleep(1)
-    return respuesta
+    response = Response(memory)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    sleep(0.5)
+    return response
 
 # Update storage with arrived data
 @app.route('/update_cpu', methods=['POST'])
@@ -46,19 +53,15 @@ def handle_update_cpu():
     data = request.get_json()
     data = json.loads(data)
     ip = data["ip"]
-    cpu_usage = data["data"]
+    cpu_usage = data["cpu_use"]
     storage.update(ip, cpu_usage)
-    return Response("ok")
+    return Response("OK")
 
 @app.get('/open_cpu_api')
-def handle_open_cpu():
-    page = Helpers.loadHTML("cpu_usage")
-    page = Response(page)
-    return page
-
+def handle_open_cpu_api():
+  page = Helpers.loadWebPage("cpu_usage", False)
+  page = Response(page)
+  return page
+ 
 def start():
-  app.run(host="0.0.0.0", port=5000)
-
-if __name__ == "__main__":
-  threading.Thread(target = start, args=(),
-    daemon = True).start() 
+  serve(app, host=Helpers.SERVER_IP, port=Helpers.API_PORT)

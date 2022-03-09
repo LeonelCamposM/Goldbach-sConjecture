@@ -95,22 +95,6 @@ class Worker():
     time_elapsed = finish-start
     time_elapsed = str(round(time_elapsed,5))
     return time_elapsed
-
-def cpuStatusUpdater():
-  BASE = "http://"+str(Helpers.SERVER_IP)+":5000/"
-  while True:
-    percents = psutil.cpu_percent(percpu=True, interval=1)
-    use_percpu = []
-    ip = Helpers.getIP()
-    for value in percents:
-        use_percpu.append(str(int(value)))    
-    args = dict()
-    args['ip'] = ip
-    args['data'] = use_percpu
-    myjson = json.dumps(args)
-    url = BASE + "update_cpu"
-    requests.post(url, json = myjson)
-    sleep(1)
     
 def shell(command):
   subprocess.check_output(command, shell=True)
@@ -131,8 +115,26 @@ def makeGoldbachCalculators():
   shell("mv bin goldbach_server/src/goldbach")
   os.chdir("goldbach_server/src")
 
+def apiUpdater():
+  URL = "http://"+str(Helpers.SERVER_IP)+":5000/update_cpu"
+  while True:
+    data = get_cpu_use()
+    data = json.dumps(data)
+    requests.post(URL, json = data)
+    sleep(0.5)
+  
+def get_cpu_use():
+  percents = psutil.cpu_percent(percpu=True, interval=1)
+  use_percpu = []
+  for value in percents:
+      use_percpu.append(str(int(value)))    
+  args = dict()
+  args['ip'] = Helpers.getIP()
+  args['cpu_use'] = use_percpu
+  return args
+
 if __name__ == "__main__":
-  threading.Thread(target = cpuStatusUpdater, args=(),
+  threading.Thread(target = apiUpdater, args=(),
         daemon = True).start()
   makeGoldbachCalculators()
   client = Worker()

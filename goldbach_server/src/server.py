@@ -103,7 +103,7 @@ class Server:
     return (unified_workload, calculator, numbers)
 
   def serveHomepage(self,connection):
-    home_page = Helpers.loadHTML("home")
+    home_page = Helpers.loadWebPage("home", True)
     Helpers.sendWebMessage(home_page, connection)
     connection.close()
   
