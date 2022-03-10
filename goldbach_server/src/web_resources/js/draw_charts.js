@@ -56,6 +56,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         // create fetched_data.length charts in array
         if (first_time) {
             for (let index = 0; index < fetched_data.length; index++) {
+                let chartID = 'chart_'+String(index);
+                let ip_id = 'worker_'+String(index);
+                let canva_id = '<canvas id= '+chartID+'></canvas>'
+                let canva_space = '<figure> <h4>Usage percentage per thread</h4><h3 id = '+ip_id+'>IP: </h3>'+canva_id+'</figure>'
+                const elemH1 = document.createElement("H4")
+                elemH1.innerHTML = canva_space
+                const $container = document.getElementById("chart_section")
+                $container.append(elemH1)
                 let cpu_usage = fetched_data[index].value
                 let alphas = [];
                 let alpha_index = 0;
@@ -90,8 +98,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     }]
                 }
                 
-
-                let new_chart = new Chart(document.getElementById("chart_0"), { type: 'bar', data, options });
+            
+                let new_chart = new Chart(document.getElementById(chartID), { type: 'bar', data, options });
                 charts.push(new_chart);
             }
             first_time = false
@@ -101,6 +109,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.body.classList.add('running');
         // update charts with data
         for (let index = 0; index < fetched_data.length; index++) {
+            let ip_id = 'worker_'+String(index)
+            document.getElementById(ip_id).innerHTML = fetched_data[index].ip
             updateChart(charts[index], fetched_data[index].value);
         }
     }
