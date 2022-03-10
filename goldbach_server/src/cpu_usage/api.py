@@ -52,6 +52,7 @@ def handle_cpu_status():
 def handle_update_cpu():
     data = request.get_json()
     data = json.loads(data)
+    print(data)
     ip = data["ip"]
     cpu_usage = data["cpu_use"]
     storage.update(ip, cpu_usage)
