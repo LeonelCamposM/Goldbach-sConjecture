@@ -113,10 +113,15 @@ def serverKiller(server):
   except KeyboardInterrupt:
     server.stop()
 
-if __name__ == "__main__":
+def start():
   server = Server(Helpers.WELCOME_PORT)
-  threading.Thread(target = server.listenClient, args=(),).start()
-  threading.Thread(target = Api.start(), args=(),).start()
+  server.listenClient()
+
+# if __name__ == "__main__":
+  # server = Server(Helpers.WELCOME_PORT)
+  # threading.Thread(target = server.listenClient, args=(),).start()
+
+  # threading.Thread(target = Api.start(), args=(),).start()
   
   #main thread wait ctrl + c signal
-  serverKiller(server)
+  # serverKiller(server)

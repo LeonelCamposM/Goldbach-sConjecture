@@ -116,7 +116,8 @@ def makeGoldbachCalculators():
   os.chdir("goldbach_server/src")
 
 def apiUpdater():
-  URL = "http://"+str(Helpers.SERVER_IP)+":5000/update_cpu"
+  api_port = str(Helpers.API_PORT)
+  URL = "http://"+str(Helpers.SERVER_IP)+":"+api_port+"/update_cpu"
   while True:
     data = get_cpu_use()
     data = json.dumps(data)

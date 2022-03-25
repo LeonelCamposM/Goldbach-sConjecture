@@ -4,7 +4,7 @@ const styles = {
         solids: ['rgba(116, 72, 194, 1)', 'rgba(33, 192, 215, 1)', 'rgba(217, 158, 43, 1)', 'rgba(205, 58, 129, 1)', 'rgba(156, 153, 204, 1)', 'rgba(225, 78, 202, 1)'],
 
         alphas: ['rgba(116, 72, 194, .2)', 'rgba(33, 192, 215, .2)', 'rgba(217, 158, 43, .2)', 'rgba(205, 58, 129, .2)', 'rgba(156, 153, 204, .2)', 'rgba(225, 78, 202, .2)']
-    }
+    }             ,                                                                                  
 }
 
 // Default chart conf
@@ -38,7 +38,8 @@ const options = {
 let charts = []
 
 async function loadData(){
-    const response = await fetch('http://192.168.1.115:5000/cpu_status')
+    //TODO update address
+    const response = await fetch('http://192.168.0.3:8001/cpu_status')
     const data = await response.json();
     return data
 }

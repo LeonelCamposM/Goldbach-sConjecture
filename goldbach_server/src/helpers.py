@@ -1,12 +1,12 @@
 import socket
 
 # Server info
-SERVER_IP = '192.168.1.115'
-WELCOME_PORT = 3389
+SERVER_IP = '192.168.0.3'
+WELCOME_PORT = 8000
 PACKAGE_SIZE = 1024
 
 # Api Server info
-API_PORT = 5000
+API_PORT = 8001
 
 # len(message) < PACKAGE_SIZE
 # Send data to web client or worker
