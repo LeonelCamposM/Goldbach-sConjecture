@@ -1,20 +1,23 @@
 import server as Server
 import cpu_usage.api as Api
-from multiprocessing import Pool
-from time import sleep
+import multiprocessing
+import signal
+import time
 
-def serverKiller(pool):
+def init_worker():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+def serverKiller():
   try:
-    while True: sleep(99999)
+    while True: time.sleep(99999)
   except KeyboardInterrupt:
-    print("[Goldbach Server] Shutting down")
-    pool.close()
-    pool.terminate()
-    pool.join()
+    print("[\nGoldbach Server] Shutting down")
 
 if __name__ == "__main__":
-  print("[Goldbach Server] Starting")
-  pool = Pool(processes=2)
-  pool.apply_async(Server.start)
-  pool.apply_async(Api.start)
-  serverKiller(pool)
+    print("\n[Goldbach Server] Starting")
+    pool = multiprocessing.Pool(2, init_worker)
+    pool.apply_async(Server.start)
+    pool.apply_async(Api.start)
+    serverKiller()
+    pool.terminate()
+    pool.join()

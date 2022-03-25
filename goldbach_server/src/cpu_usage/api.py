@@ -65,4 +65,5 @@ def handle_open_cpu_api():
   return page
  
 def start():
-  serve(app, host=Helpers.SERVER_IP, port=Helpers.API_PORT)
+    print("[API] Running on "+str(Helpers.SERVER_IP)+" port "+str(Helpers.API_PORT))
+    serve(app, host=Helpers.SERVER_IP, port=Helpers.API_PORT)
