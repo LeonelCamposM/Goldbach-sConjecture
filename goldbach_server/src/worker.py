@@ -122,7 +122,7 @@ def apiUpdater():
     data = get_cpu_use()
     data = json.dumps(data)
     requests.post(URL, json = data)
-    sleep(0.5)
+    sleep(0.2)
   
 def get_cpu_use():
   percents = psutil.cpu_percent(percpu=True, interval=1)

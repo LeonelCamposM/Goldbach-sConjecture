@@ -1,7 +1,8 @@
 import socket
 
 # Server info
-SERVER_IP = '192.168.0.3'
+# TODO update address
+SERVER_IP = '192.168.0.6'
 WELCOME_PORT = 8000
 PACKAGE_SIZE = 1024
 

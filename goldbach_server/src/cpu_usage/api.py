@@ -44,7 +44,7 @@ def handle_cpu_status():
     memory = storage.get()
     response = Response(memory)
     response.headers["Access-Control-Allow-Origin"] = "*"
-    sleep(0.5)
+    sleep(0.2)
     return response
 
 # Update storage with arrived data
@@ -52,7 +52,7 @@ def handle_cpu_status():
 def handle_update_cpu():
     data = request.get_json()
     data = json.loads(data)
-    print(data)
+    # print(data)
     ip = data["ip"]
     cpu_usage = data["cpu_use"]
     storage.update(ip, cpu_usage)
@@ -65,5 +65,5 @@ def handle_open_cpu_api():
   return page
  
 def start():
-    print("[API] Running on "+str(Helpers.SERVER_IP)+" port "+str(Helpers.API_PORT))
+    print("\n[API] Running on "+str(Helpers.SERVER_IP)+" port "+str(Helpers.API_PORT))
     serve(app, host=Helpers.SERVER_IP, port=Helpers.API_PORT)
