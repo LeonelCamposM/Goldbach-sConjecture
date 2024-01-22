@@ -22,7 +22,6 @@ class Work_Package():
     self.final_time = -1
 
 # Thread safe queue, sleep thread when queue is empty
-# Alternate betwen send and rcv 
 class Queue():
   def __init__(self):
     self.queue= []
@@ -61,7 +60,7 @@ class Goldbach_Web:
       result_array.remove("")
       for line in result_array:
         results_str += line+"<br>"+"<br>"
-    results_page = Helpers.loadHTML("results")
+    results_page = Helpers.loadWebPage("results", True)
     results_page = results_page.replace("(time)", str(round(time,5)))
     results_page = results_page.replace("(result)", results_str)
     Helpers.sendWebMessage(results_page, connection)

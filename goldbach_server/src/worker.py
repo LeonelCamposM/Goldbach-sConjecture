@@ -1,17 +1,20 @@
 import socket
 import os
 from ctypes import CDLL
-from time import time
+import threading
+from time import sleep, time
 import helpers as Helpers
 import subprocess
 import shutil
+import psutil
+import json
+import requests
 
 class Worker():
   def __init__(self):
     self.server_address = (Helpers.SERVER_IP, Helpers.WELCOME_PORT)
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logAppend('Connecting on %s port %s \n' % self.server_address)
-
     self.goldbach_pthread = CDLL("./goldbach/bin/lib_goldbach_pthread.so")
     self.goldbach_omp = CDLL("./goldbach/bin/lib_goldbach_omp.so")
     self.goldbach_serial = CDLL("./goldbach/bin/lib_goldbach_serial.so")
@@ -92,15 +95,13 @@ class Worker():
     time_elapsed = finish-start
     time_elapsed = str(round(time_elapsed,5))
     return time_elapsed
-
+    
 def shell(command):
   subprocess.check_output(command, shell=True)
 
 def makeGoldbachCalculators():
   os.chdir("..")
   os.chdir("..")
-  shell('ls')
-
   program_names = ["goldbach_serial", "goldbach_pthread", "goldbach_omp"]
   for program in program_names:
     print("Making "+program+"\n")
@@ -114,7 +115,28 @@ def makeGoldbachCalculators():
   shell("mv bin goldbach_server/src/goldbach")
   os.chdir("goldbach_server/src")
 
+def apiUpdater():
+  api_port = str(Helpers.API_PORT)
+  URL = "http://"+str(Helpers.SERVER_IP)+":"+api_port+"/update_cpu"
+  while True:
+    data = get_cpu_use()
+    data = json.dumps(data)
+    requests.post(URL, json = data)
+    sleep(0.2)
+  
+def get_cpu_use():
+  percents = psutil.cpu_percent(percpu=True, interval=1)
+  use_percpu = []
+  for value in percents:
+      use_percpu.append(str(int(value)))    
+  args = dict()
+  args['ip'] = Helpers.getIP()
+  args['cpu_use'] = use_percpu
+  return args
+
 if __name__ == "__main__":
+  threading.Thread(target = apiUpdater, args=(),
+         daemon = True).start()
   makeGoldbachCalculators()
   client = Worker()
   client.start()
