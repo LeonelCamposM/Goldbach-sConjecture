@@ -28,7 +28,7 @@ let charts = []
 
 async function loadData(){
     //TODO update address
-    const response = await fetch('http://192.168.0.6:8001/cpu_status')
+    const response = await fetch('http://172.30.56.252:8001/cpu_status')
     const data = await response.json();
     return data
 }
