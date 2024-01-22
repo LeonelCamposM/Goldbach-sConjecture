@@ -2,8 +2,8 @@ import socket
 
 # Server info
 # TODO update address
-SERVER_IP = '192.168.0.6'
-WELCOME_PORT = 8000
+SERVER_IP = '172.30.56.252'
+WELCOME_PORT = 5000
 PACKAGE_SIZE = 1024
 
 # Api Server info

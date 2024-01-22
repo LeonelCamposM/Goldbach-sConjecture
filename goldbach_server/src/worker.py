@@ -136,7 +136,7 @@ def get_cpu_use():
 
 if __name__ == "__main__":
   threading.Thread(target = apiUpdater, args=(),
-        daemon = True).start()
+         daemon = True).start()
   makeGoldbachCalculators()
   client = Worker()
   client.start()
