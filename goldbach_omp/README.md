@@ -2,7 +2,7 @@
 The goal of this project is to implement the producer-consumer pattern in a simple way using OpenMP. to further reduce the duration of the program
 
 ## Results 
-Time calculating file input023: 203.07 seconds (12 threads))
+Time calculating file input023: 203.07 seconds (12 threads)
 
 ## Design
 The goal of this design is to increase the execution speed of goldbach_pthread by using the concurrency pattern known as producer-consumer.

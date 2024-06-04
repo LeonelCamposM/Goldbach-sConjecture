@@ -10,30 +10,47 @@ On the other hand, the "weak conjecture" proposes that every positive, greater t
 - 9: 2 sums: 2 + 2 + 5, 3 + 3 + 3
 - 21: 5 sums: 2 + 2 + 17, 3 + 5 + 13, 3 + 7 + 11, 5 + 5 + 11, 7 + 7 + 7
 
-## Abstract
+## Project Overview
 
 The purpose of this project is to create a brute force solution (for numbers greater than 5) which is expected to be slow; Then try to optimize it using different technologies and concurrency patterns implemented in the C programming language.
+![makeImg](img/performanceChart.png)
 
-## Requirements
 
-These programs were designed on ubuntu 20.04 and require the following packages:
-- sudo apt install build-essential
-- sudo apt install icdiff
+## Key Features
+- **Goldbach Serial**: This is the brute-force and slowest solution, writen in c. 
+**Time calculating file input023: 792.41 seconds (1 thread)**
 
-## User manual 
+<br>
 
-### How to make a manual test
-1) Compile the program: make
-![makeImg](img/Make.png)
+- **Goldbach Pthread**: In this solution i applied the concurrency pattern known as conditionally safe.
+**Time calculating file input023: 249.303 seconds (12 threads)**
+**Conditonally safe (concurrency pattern)**
+Each thread does its work and places its results in a region of memory that only it can access.
+**Design**
+![designImg](/goldbach_pthread/design/design.svg)
 
-2) Run the program: ./bin/program_name
-![runImg](img/Execute.png)
+<br>
 
-3) Write a number and press enter
-![writeImg](img/Write.png)
+- **Goldbach OMP**: In this solution i applied the concurrency pattern known as Producer-Consumer and OpenMP technology.
+**Time calculating file input023: 203.07 seconds (12 threads)**
+**Producer-Consumer (concurrency pattern)**
+There are many variants of the producer-consumer problem. In this case, first all the work is produced serially, and later consumers consume the work.
+**Design**
+![designImg](/goldbach_omp/design/concurrent_design.svg)
 
-### How to make a automatic test
-The script will execute all the test cases and report the time it took to execute each one.
+<br>
 
-1) Run the script: ./program_tester.sh
-![TesterImg](img/Tester.png)
+- **Goldbach Server**: In this solution, i built a server/worker web architecture that allows the creation of a distributed cluster coordinated by the server using multiple laptops, utilizing all their threads as workers to the conjecture.
+**Time calculating file input023: 103.20 seconds (40 threads)**
+![designImg](img/homePage.png)
+![designImg](img/workerConnection.png)
+![designImg](img/worker.png)
+Also, i provide a cpu usage page where ypu can monitor all the workers connected to the system.
+![designImg](img/cpuChart.png)
+![designImg](img/result.png)
+
+<br>
+
+## Running the app
+<a href="https://github.com/LeonelCamposM/Goldbach-sConjecture/blob/main/goldbach_server/README.md">Setup instructions</a>
+

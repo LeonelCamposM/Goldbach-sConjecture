@@ -1,9 +1,13 @@
 # Goldbach (server)
-## Dependencies:
-flask
-pip
-python3
-psutil
+## Requirements
+
+These programs were designed on ubuntu 20.04 and require the following packages:
+- sudo apt install build-essential
+- sudo apt install icdiff
+- pip
+- python3
+- psutil
+- flask
 
 
 ## Running program on WSL2

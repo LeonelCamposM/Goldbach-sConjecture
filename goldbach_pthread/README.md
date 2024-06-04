@@ -2,7 +2,7 @@
 In this program it was possible to reduce the duration with respect to the serial version and now it has a more acceptable duration for the user.
 
 ## Results 
-Time calculating file input023: 249.303 seconds (12 threads))
+Time calculating file input023: 249.303 seconds (12 threads)
 
 ## Design
 The goal of this design is to increase the execution speed of goldbach_serial by using the concurrency pattern known as conditionally safe.
