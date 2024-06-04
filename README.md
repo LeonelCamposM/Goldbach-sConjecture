@@ -43,12 +43,19 @@ The purpose of this project is to create a brute force solution (for numbers gre
 
 **Time calculating file input023: 103.20 seconds (40 threads)**
 ![designImg](img/homePage.png)
-![designImg](img/workerConnection.png)
-![designImg](img/worker.png)
+<table>
+        <tr>
+            <td><img src="img/workerConnection.png" alt="Worker Connection"></td>
+            <td><img src="img/worker.png" alt="Worker"></td>
+        </tr>
+    </table>
 Also, i provide a cpu usage page where you can monitor all the workers connected to the system.
-![designImg](img/cpuChart.png)
-![designImg](img/result.png)
-
+ <table>
+        <tr>
+            <td><img src="img/cpuChart.png" alt="CPU Chart"></td>
+            <td><img src="img/result.png" alt="Result"></td>
+        </tr>
+    </table>
 <br>
 
 ## Running the app
