@@ -18,6 +18,8 @@ The purpose of this project is to create a brute force solution (for numbers gre
 
 ## Key Features
 - **Goldbach Serial**: This is the brute-force and slowest solution, writen in c. 
+<br>
+
 **Time calculating file input023: 792.41 seconds (1 thread)**
 
 <br>
