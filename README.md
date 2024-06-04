@@ -22,30 +22,28 @@ The purpose of this project is to create a brute force solution (for numbers gre
 
 <br>
 
-- **Goldbach Pthread**: In this solution i applied the concurrency pattern known as conditionally safe.
+- **Goldbach Pthread (Conditonally safe)**: Each thread does its work and places its results in a region of memory that only it can access.
+<br>
+
 **Time calculating file input023: 249.303 seconds (12 threads)**
-**Conditonally safe (concurrency pattern)**
-Each thread does its work and places its results in a region of memory that only it can access.
-**Design**
 ![designImg](/goldbach_pthread/design/design.svg)
 
 <br>
 
-- **Goldbach OMP**: In this solution i applied the concurrency pattern known as Producer-Consumer and OpenMP technology.
+- **Goldbach OMP (Producer-Consumer)**: There are many variants of the producer-consumer problem. In this case, first all the work is produced serially, and later consumers consume the work.
+
 **Time calculating file input023: 203.07 seconds (12 threads)**
-**Producer-Consumer (concurrency pattern)**
-There are many variants of the producer-consumer problem. In this case, first all the work is produced serially, and later consumers consume the work.
-**Design**
 ![designImg](/goldbach_omp/design/concurrent_design.svg)
 
 <br>
 
-- **Goldbach Server**: In this solution, i built a server/worker web architecture that allows the creation of a distributed cluster coordinated by the server using multiple laptops, utilizing all their threads as workers to the conjecture.
+- **Goldbach Server**: In this solution, i built a server/worker web architecture that allows the creation of a distributed cluster coordinated by the server using multiple laptops, utilizing all their threads as workers to solve the conjecture.
+
 **Time calculating file input023: 103.20 seconds (40 threads)**
 ![designImg](img/homePage.png)
 ![designImg](img/workerConnection.png)
 ![designImg](img/worker.png)
-Also, i provide a cpu usage page where ypu can monitor all the workers connected to the system.
+Also, i provide a cpu usage page where you can monitor all the workers connected to the system.
 ![designImg](img/cpuChart.png)
 ![designImg](img/result.png)
 
